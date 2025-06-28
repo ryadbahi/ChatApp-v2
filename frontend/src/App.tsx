@@ -1,66 +1,38 @@
-import { useEffect, useState } from "react";
-import { socket } from "./socket";
+import { Routes, Route, Navigate } from "react-router-dom";
+import LoginRegisterPage from "./pages/LoginRegister";
+import ChatPage from "./pages/ChatRoom";
+import ProfilePage from "./pages/Profile";
+import JoinPrivate from "./pages/JoinPrivate";
 
-function App() {
-  const [connected, setConnected] = useState(socket.connected);
-  const [messages, setMessages] = useState<any[]>([]);
+import ProtectedRoute from "./components/ProtectedRoute";
 
-  useEffect(() => {
-    socket.connect(); // Connect when the app mounts
-
-    socket.on("connect", () => setConnected(true));
-    socket.on("disconnect", () => setConnected(false));
-
-    socket.on("receiveMessage", (msg) => {
-      setMessages((prev) => [...prev, msg]);
-    });
-
-    return () => {
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off("receiveMessage");
-      socket.disconnect();
-    };
-  }, []);
-
-  const joinRoom = (roomId: string) => socket.emit("joinRoom", roomId);
-
-  const sendMessage = (roomId: string, content: string) => {
-    const message = { roomId, content, sentAt: new Date() };
-    socket.emit("sendMessage", { roomId, message });
-    setMessages((prev) => [...prev, message]); // optimistic UI update
-  };
-
+function App(): React.JSX.Element {
   return (
-    <div className="p-4">
-      <h1 className="text-xl mb-2">
-        Socket connected: {connected ? "✅" : "❌"}
-      </h1>
+    <Routes>
+      {/* Public routes */}
+      <Route path="/login" element={<LoginRegisterPage />} />
 
-      <button
-        onClick={() => joinRoom("YOUR_ROOM_ID_HERE")}
-        className="bg-blue-500 text-white px-2 py-1 mb-4 rounded"
-      >
-        Join Room
-      </button>
+      {/* Protected routes */}
+      <Route
+        path="/chat"
+        element={
+          <ProtectedRoute>
+            <ChatPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
 
-      <div className="space-y-2 mb-4">
-        {messages.map((msg, idx) => (
-          <div key={idx} className="p-2 border rounded">
-            {typeof msg.content === "string"
-              ? msg.content
-              : JSON.stringify(msg)}
-          </div>
-        ))}
-      </div>
-
-      <button
-        onClick={() => sendMessage("YOUR_ROOM_ID_HERE", "Hello!")}
-        className="bg-green-500 text-white px-2 py-1 rounded"
-      >
-        Send Hello
-      </button>
-    </div>
+      {/* Default fallback */}
+      <Route path="*" element={<Navigate to="/chat" replace />} />
+    </Routes>
   );
 }
 

@@ -10,6 +10,7 @@ import authRoutes from "./routes/auth.route";
 import { errorHandler } from "./middlewares/errorHandler";
 import roomRoute from "./routes/room.route";
 import messageRoute from "./routes/message.route";
+import jwt from "jsonwebtoken";
 
 dotenv.config();
 
@@ -20,6 +21,19 @@ const io = new Server(server, {
     origin: "http://localhost:5173", // Frontend URL
     credentials: true,
   },
+});
+
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token;
+  if (!token) return next(new Error("No token provided"));
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+    socket.data.user = decoded; // You can access it later via socket.data.user
+    next();
+  } catch (err) {
+    next(new Error("Invalid token"));
+  }
 });
 
 // ✅ Socket.io Events
@@ -44,7 +58,7 @@ io.on("connection", (socket) => {
 });
 
 // ✅ Middleware
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 

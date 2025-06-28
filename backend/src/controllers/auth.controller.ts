@@ -80,24 +80,19 @@ export const logout = async (_req: Request, res: Response) => {
     .json({ msg: "Logged out" });
 };
 
-export const getMe = async (req: Request, res: Response): Promise<void> => {
+export const getMe = async (req: Request, res: Response) => {
   try {
-    const user = await User.findById(req.userId).select(
-      "username email avatar"
-    );
-    if (!user) {
-      res.status(404).json({ msg: "User not found" });
-      return;
-    }
+    const user = await User.findById(req.userId).select("-password");
+    if (!user) return res.status(404).json({ msg: "User not found" });
 
     res.status(200).json({
-      id: user._id.toString(),
+      id: user._id,
       username: user.username,
       email: user.email,
       avatar: user.avatar,
     });
   } catch (err) {
-    res.status(500).json({ msg: "Error fetching user" });
+    res.status(500).json({ msg: "Server error" });
   }
 };
 
