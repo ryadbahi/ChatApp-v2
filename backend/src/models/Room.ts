@@ -1,0 +1,51 @@
+import { Schema, model, Types, Document } from "mongoose";
+import bcrypt from "bcryptjs";
+
+// Interface for document methods
+export interface IRoom extends Document {
+  name: string;
+  isPrivate: boolean;
+  password?: string;
+  createdBy: Types.ObjectId;
+  members: Types.ObjectId[];
+  comparePassword(candidate: string): Promise<boolean>;
+}
+
+const roomSchema = new Schema<IRoom>(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    isPrivate: {
+      type: Boolean,
+      default: false,
+    },
+    password: {
+      type: String,
+    },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    members: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+  },
+  { timestamps: true }
+);
+
+// Method to compare password
+roomSchema.methods.comparePassword = async function (
+  candidate: string
+): Promise<boolean> {
+  if (!this.password) return false;
+  return await bcrypt.compare(candidate, this.password);
+};
+
+export default model<IRoom>("Room", roomSchema);
