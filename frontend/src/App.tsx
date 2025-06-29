@@ -1,8 +1,9 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import LoginRegisterPage from "./pages/LoginRegister";
-import ChatPage from "./pages/ChatRoom";
+import ChatRoom from "./pages/ChatRoom";
 import ProfilePage from "./pages/Profile";
 import JoinPrivate from "./pages/JoinPrivate";
+import Rooms from "./pages/Rooms";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -13,11 +14,20 @@ function App(): React.JSX.Element {
       <Route path="/login" element={<LoginRegisterPage />} />
 
       {/* Protected routes */}
+
+      <Route
+        path="/rooms"
+        element={
+          <ProtectedRoute>
+            <Rooms />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/chat"
         element={
           <ProtectedRoute>
-            <ChatPage />
+            <ChatRoom />
           </ProtectedRoute>
         }
       />
@@ -31,7 +41,7 @@ function App(): React.JSX.Element {
       />
 
       {/* Default fallback */}
-      <Route path="*" element={<Navigate to="/chat" replace />} />
+      <Route path="*" element={<Navigate to="/rooms" replace />} />
     </Routes>
   );
 }

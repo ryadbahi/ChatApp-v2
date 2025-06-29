@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         withCredentials: true,
       });
       setUser(res.data.user);
-      navigate("/chat");
+      navigate("/rooms");
     } catch (err) {
       console.error("Register error", err);
     } finally {
@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         withCredentials: true,
       });
       setUser(res.data.user);
-      navigate("/chat");
+      navigate("/rooms");
     } catch (err) {
       console.error("Login error", err);
     } finally {
