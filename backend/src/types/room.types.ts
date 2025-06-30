@@ -1,9 +1,10 @@
 export interface CreateRoomRequestBody {
   name: string;
-  isPrivate?: boolean;
+  visibility?: "public" | "private" | "secret";
   password?: string;
 }
 
 export interface JoinRoomRequestBody {
   password?: string;
+  name?: string; // nécessaire uniquement pour les rooms "secret"
 }

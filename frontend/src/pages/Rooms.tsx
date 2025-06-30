@@ -13,14 +13,15 @@ interface Room {
 
 const Rooms = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // ✅ This is now correctly inside the component
+
   useEffect(() => {
     const fetchRooms = async () => {
       try {
         const res = await axios.get("/api/rooms", { withCredentials: true });
         setRooms(res.data);
       } catch (err) {
-        console.error("Failed to fetch rooms", err);
+        console.error("[Rooms] Failed to fetch rooms:", err);
       }
     };
 
@@ -35,8 +36,11 @@ const Rooms = () => {
         {rooms.map((room) => (
           <div
             key={room._id}
-            onClick={() => navigate(`/chat/${room._id}`)}
-            className="backdrop-blur-md bg-white/10 border border-white/20 text-white rounded-2xl p-6 shadow-xl flex flex-col justify-between transition hover:scale-[1.02]"
+            onClick={() => {
+              console.log("[Rooms] Navigating to room:", room._id);
+              navigate(`/chat/${room._id}`);
+            }}
+            className="cursor-pointer backdrop-blur-md bg-white/10 border border-white/20 text-white rounded-2xl p-6 shadow-xl flex flex-col justify-between transition hover:scale-[1.02]"
           >
             <div className="mb-4">
               <div className="flex justify-between items-center">

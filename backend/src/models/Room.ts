@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 // Interface for document methods
 export interface IRoom extends Document {
   name: string;
-  isPrivate: boolean;
+  visibility: "public" | "private" | "secret";
   password?: string;
   createdBy: Types.ObjectId;
   members: Types.ObjectId[];
@@ -18,9 +18,10 @@ const roomSchema = new Schema<IRoom>(
       required: true,
       trim: true,
     },
-    isPrivate: {
-      type: Boolean,
-      default: false,
+    visibility: {
+      type: String,
+      enum: ["public", "private", "secret"],
+      default: "public",
     },
     password: {
       type: String,

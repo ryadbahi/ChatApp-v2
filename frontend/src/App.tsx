@@ -24,13 +24,14 @@ function App(): React.JSX.Element {
         }
       />
       <Route
-        path="/chat"
+        path="/chat/:roomId"
         element={
           <ProtectedRoute>
             <ChatRoom />
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/profile"
         element={
