@@ -1,15 +1,18 @@
-// src/socket.ts
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
+import * as cookie from "cookie"; // ✅ important ici
 import Message from "./models/Message";
 import Room from "./models/Room";
 import { Types } from "mongoose";
 
 export const setupSocket = (io: Server) => {
-  // ✅ Auth middleware
   io.use((socket, next) => {
-    const token = socket.handshake.auth?.token;
-    console.log("🛂 Token received in handshake:", token);
+    const rawCookie = socket.handshake.headers.cookie || "";
+    const cookies = cookie.parse(rawCookie); // ✅ maintenant ça marche
+    const token = cookies.token;
+
+    console.log("🛂 Token from cookie:", token);
+
     if (!token) {
       console.warn("[Socket] ❌ No token provided");
       return next(new Error("No token provided"));
@@ -28,37 +31,24 @@ export const setupSocket = (io: Server) => {
     }
   });
 
-  // ✅ On connection
   io.on("connection", (socket) => {
     console.log("🔌 New client connected:", socket.id);
 
-    // 🔍 Log all incoming events
     socket.onAny((event, payload) => {
       console.log(`📨 Event received: '${event}'`, payload);
     });
 
-    // ✅ Join a room
     socket.on("joinRoom", (roomId: string) => {
       socket.join(roomId);
       console.log(`🟢 Socket ${socket.id} joined room ${roomId}`);
     });
 
-    // ✅ Send a message
     socket.on("sendMessage", async ({ roomId, message }) => {
       const userId = socket.data.userId;
-
-      if (!message?.trim()) {
-        console.warn("[Socket] ❗ Empty message discarded");
-        return;
-      }
+      if (!message?.trim()) return;
 
       const room = await Room.findById(roomId);
-      if (!room || !room.members.some((member) => member.equals(userId))) {
-        console.warn("[Socket] ⛔ Access denied: not a member of room", roomId);
-        return;
-      }
-
-      console.log("✅ Message accepted:", message);
+      if (!room) return;
 
       const msg = await Message.create({
         room: roomId,
@@ -72,7 +62,6 @@ export const setupSocket = (io: Server) => {
       io.to(roomId).emit("newMessage", populated);
     });
 
-    // ✅ On disconnect
     socket.on("disconnect", () => {
       console.log("❌ Client disconnected:", socket.id);
     });

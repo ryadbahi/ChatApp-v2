@@ -24,12 +24,6 @@ export const getMessages = async (
       return;
     }
 
-    const isMember = room.members.some((m) => m.equals(req.userId));
-    if (!isMember) {
-      res.status(403).json({ msg: "Access denied. Join the room first." });
-      return;
-    }
-
     const messages = await Message.find({ room: roomId })
       .sort({ createdAt: 1 })
       .populate("sender", "username avatar");
@@ -62,13 +56,6 @@ export const sendMessage = async (
 
     if (!room) {
       res.status(404).json({ msg: "Room not found" });
-      return;
-    }
-
-    // 🔐 Check membership
-    const isMember = room.members.some((member) => member.equals(req.userId));
-    if (!isMember) {
-      res.status(403).json({ msg: "Access denied. Join the room first." });
       return;
     }
 

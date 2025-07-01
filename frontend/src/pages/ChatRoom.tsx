@@ -1,15 +1,14 @@
-// src/pages/ChatRoom.tsx
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import axios from "../api/axios";
-import { io, Socket } from "socket.io-client";
+import { useChatRoom } from "../hooks/useChatRoom";
+import { jwtDecode } from "jwt-decode";
 
 interface Room {
   _id: string;
   name: string;
   visibility: string;
   createdBy: { _id: string; username: string };
-  members: string[];
   createdAt: string;
 }
 
@@ -20,87 +19,75 @@ interface Message {
   createdAt: string;
 }
 
+interface JwtPayload {
+  id: string;
+  iat: number;
+  exp: number;
+}
+
 const ChatRoom = () => {
   const { roomId } = useParams<{ roomId: string }>();
   const [room, setRoom] = useState<Room | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const socketRef = useRef<Socket | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Join room + fetch room data
-  useEffect(() => {
-    const fetchRoom = async () => {
-      try {
-        const res = await axios.post(
-          `/api/rooms/${roomId}/join`,
-          {},
-          { withCredentials: true }
-        );
-        setRoom(res.data);
-      } catch (err) {
-        console.error("[ChatRoom] Failed to join room", err);
-      }
-    };
-
-    fetchRoom();
-  }, [roomId]);
-
-  // Fetch existing messages
-  useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const res = await axios.get(`/api/messages/${roomId}`, {
-          withCredentials: true,
-        });
-        setMessages(res.data);
-      } catch (err) {
-        console.error("[ChatRoom] Failed to fetch messages", err);
-      }
-    };
-
-    if (roomId) {
-      fetchMessages();
-    }
-  }, [roomId]);
-
-  // Socket.IO
-  useEffect(() => {
+  const getCurrentUserId = (): string | null => {
     const token = document.cookie
       .split("; ")
-      .find((row) => row.startsWith("token="))
+      .find((c) => c.startsWith("token="))
       ?.split("=")[1];
-    if (!roomId || !token) return;
 
-    socketRef.current = io("http://localhost:5001", {
-      auth: { token },
-      withCredentials: true,
-    });
+    if (!token) return null;
 
-    socketRef.current.on("connect", () => {
-      console.log("✅ Connected to socket server:", socketRef.current?.id);
-    });
+    try {
+      const decoded = jwtDecode<JwtPayload>(token);
+      return decoded.id;
+    } catch (err) {
+      console.error("Failed to decode token", err);
+      return null;
+    }
+  };
 
-    socketRef.current.emit("joinRoom", roomId);
+  const currentUserId = getCurrentUserId();
 
-    socketRef.current.on("newMessage", (msg: Message) => {
-      setMessages((prev) => [...prev, msg]);
-    });
-
-    return () => {
-      socketRef.current?.disconnect();
-    };
+  useEffect(() => {
+    if (!roomId) return;
+    axios
+      .post(`/api/rooms/${roomId}/join`, {}, { withCredentials: true })
+      .then((res) => setRoom(res.data))
+      .catch((err) => {
+        setRoom(null);
+        console.error("[ChatRoom] Failed to join room", err);
+      });
   }, [roomId]);
 
-  const handleSend = () => {
-    if (!newMessage.trim()) return;
-    console.log("[handleSend] Sending message:", newMessage);
-    socketRef.current?.emit("sendMessage", {
-      roomId,
-      message: newMessage,
-    });
+  useEffect(() => {
+    if (!roomId) return;
+    axios
+      .get(`/api/messages/${roomId}`, { withCredentials: true })
+      .then((res) => setMessages(res.data))
+      .catch((err) => {
+        setMessages([]);
+        console.error("[ChatRoom] Failed to fetch messages", err);
+      });
+  }, [roomId]);
 
+  const handleIncomingMessage = useCallback((msg: Message) => {
+    setMessages((prev) => [...prev, msg]);
+  }, []);
+
+  const { sendMessage } = useChatRoom(roomId, handleIncomingMessage);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSend = useCallback(() => {
+    if (!newMessage.trim()) return;
+    sendMessage(newMessage);
     setNewMessage("");
-  };
+  }, [newMessage, sendMessage]);
 
   if (!room) return <p className="text-white p-4">Loading...</p>;
 
@@ -109,18 +96,20 @@ const ChatRoom = () => {
       <h1 className="text-3xl font-bold text-white mb-4">{room.name}</h1>
 
       <div className="flex-1 overflow-y-auto bg-white/10 rounded-xl p-4 space-y-2 mb-4">
-        {messages.map((msg) => (
-          <div
-            key={msg._id}
-            className={`p-2 rounded-lg max-w-sm ${
-              msg.sender.username === "me"
-                ? "ml-auto bg-blue-500 text-white"
-                : "bg-white text-black"
-            }`}
-          >
-            <strong>{msg.sender.username}:</strong> {msg.content}
-          </div>
-        ))}
+        {messages.map((msg) => {
+          const isMe = msg.sender._id === currentUserId;
+          return (
+            <div
+              key={msg._id}
+              className={`p-2 rounded-lg max-w-sm ${
+                isMe ? "ml-auto bg-blue-500 text-white" : "bg-white text-black"
+              }`}
+            >
+              <strong>{msg.sender.username}:</strong> {msg.content}
+            </div>
+          );
+        })}
+        <div ref={messagesEndRef} />
       </div>
 
       <div className="flex gap-2">

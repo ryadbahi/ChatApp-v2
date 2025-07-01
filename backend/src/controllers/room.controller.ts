@@ -83,12 +83,6 @@ export const joinRoom = async (
       return;
     }
 
-    const alreadyMember = room.members.some((member) => member.equals(userId));
-    if (alreadyMember) {
-      res.status(200).json({ msg: "Already a member", roomId: room._id });
-      return;
-    }
-
     if (room.visibility === "private") {
       if (!password) {
         res.status(400).json({ msg: "Password required for private room" });
@@ -116,7 +110,6 @@ export const joinRoom = async (
       }
     }
 
-    room.members.push(userId);
     await room.save();
 
     res.status(200).json({ msg: "Joined room successfully", roomId: room._id });
@@ -135,11 +128,7 @@ export const getUserRooms = async (
     const userId = new mongoose.Types.ObjectId(req.userId);
 
     const rooms = await Room.find({
-      $or: [
-        { visibility: "public" },
-        { visibility: "private" },
-        { members: userId },
-      ],
+      $or: [{ visibility: "public" }, { visibility: "private" }],
     })
       .select("-password")
       .populate("createdBy", "username");
@@ -167,11 +156,6 @@ export const getRoomById = async (
 
     // Vérifie que l'utilisateur est membre si la room est private ou secret
     if (room.visibility === "private" || room.visibility === "secret") {
-      const isMember = room.members.some((m) => m.equals(req.userId));
-      if (!isMember) {
-        res.status(403).json({ msg: "You are not a member of this room." });
-        return;
-      }
     }
 
     res.status(200).json(room);

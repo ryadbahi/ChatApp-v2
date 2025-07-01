@@ -7,7 +7,7 @@ export interface IRoom extends Document {
   visibility: "public" | "private" | "secret";
   password?: string;
   createdBy: Types.ObjectId;
-  members: Types.ObjectId[];
+  // members: Types.ObjectId[];
   comparePassword(candidate: string): Promise<boolean>;
 }
 
@@ -31,12 +31,6 @@ const roomSchema = new Schema<IRoom>(
       ref: "User",
       required: true,
     },
-    members: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
   },
   { timestamps: true }
 );

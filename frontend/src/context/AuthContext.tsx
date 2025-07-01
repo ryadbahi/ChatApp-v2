@@ -2,6 +2,7 @@ import { createContext, useState, useEffect, useContext } from "react";
 import type { ReactNode } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { socket } from "../socket";
 
 // Define the shape of a user
 export interface User {
@@ -61,6 +62,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         withCredentials: true,
       });
       setUser(res.data.user);
+      // Reconnect socket with new token
+      const token = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("token="))
+        ?.split("=")[1];
+      socket.disconnect();
+      if (token) {
+        socket.auth = { token };
+        socket.connect();
+      }
       navigate("/rooms");
     } catch (err) {
       console.error("Register error", err);
@@ -77,6 +88,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         withCredentials: true,
       });
       setUser(res.data.user);
+      // Reconnect socket with new token
+      const token = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("token="))
+        ?.split("=")[1];
+      socket.disconnect();
+      if (token) {
+        socket.auth = { token };
+        socket.connect();
+      }
       navigate("/rooms");
     } catch (err) {
       console.error("Login error", err);
@@ -93,6 +114,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         withCredentials: true,
       });
       setUser(null);
+      socket.disconnect();
       navigate("/login");
     } catch (err) {
       console.error("Logout error", err);
