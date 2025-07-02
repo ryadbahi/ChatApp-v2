@@ -80,11 +80,19 @@ export const logout = async (_req: Request, res: Response) => {
     .json({ msg: "Logged out" });
 };
 
-export const getMe = async (req: Request, res: Response) => {
+export const getMe = async (req: Request, res: Response): Promise<void> => {
   try {
-    const user = await User.findById(req.userId).select("-password");
-    if (!user) return res.status(404).json({ msg: "User not found" });
-
+    // @ts-ignore
+    const userId = req.userId;
+    if (!userId) {
+      res.status(401).json({ msg: "Not authenticated" });
+      return;
+    }
+    const user = await User.findById(userId).select("-password");
+    if (!user) {
+      res.status(404).json({ msg: "User not found" });
+      return;
+    }
     res.status(200).json({
       id: user._id,
       username: user.username,

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import axios from "../api/axios";
 import { useChatRoom } from "../hooks/useChatRoom";
-import { jwtDecode } from "jwt-decode";
+import { useAuth } from "../context/AuthContext";
 
 interface Room {
   _id: string;
@@ -19,58 +19,46 @@ interface Message {
   createdAt: string;
 }
 
-interface JwtPayload {
-  id: string;
-  iat: number;
-  exp: number;
-}
-
 const ChatRoom = () => {
   const { roomId } = useParams<{ roomId: string }>();
   const [room, setRoom] = useState<Room | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const getCurrentUserId = (): string | null => {
-    const token = document.cookie
-      .split("; ")
-      .find((c) => c.startsWith("token="))
-      ?.split("=")[1];
-
-    if (!token) return null;
-
-    try {
-      const decoded = jwtDecode<JwtPayload>(token);
-      return decoded.id;
-    } catch (err) {
-      console.error("Failed to decode token", err);
-      return null;
-    }
-  };
-
-  const currentUserId = getCurrentUserId();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!roomId) return;
-    axios
-      .post(`/api/rooms/${roomId}/join`, {}, { withCredentials: true })
-      .then((res) => setRoom(res.data))
-      .catch((err) => {
-        setRoom(null);
+    const joinRoom = async () => {
+      try {
+        const res = await axios.post(
+          `/api/rooms/${roomId}/join`,
+          {},
+          { withCredentials: true }
+        );
+        setRoom(res.data);
+      } catch (err) {
         console.error("[ChatRoom] Failed to join room", err);
-      });
+        setRoom(null);
+      }
+    };
+    joinRoom();
   }, [roomId]);
 
   useEffect(() => {
     if (!roomId) return;
-    axios
-      .get(`/api/messages/${roomId}`, { withCredentials: true })
-      .then((res) => setMessages(res.data))
-      .catch((err) => {
-        setMessages([]);
+    const fetchMessages = async () => {
+      try {
+        const res = await axios.get(`/api/messages/${roomId}`, {
+          withCredentials: true,
+        });
+        setMessages(res.data);
+      } catch (err) {
         console.error("[ChatRoom] Failed to fetch messages", err);
-      });
+        setMessages([]);
+      }
+    };
+    fetchMessages();
   }, [roomId]);
 
   const handleIncomingMessage = useCallback((msg: Message) => {
@@ -89,26 +77,60 @@ const ChatRoom = () => {
     setNewMessage("");
   }, [newMessage, sendMessage]);
 
+  const handleLeave = () => {
+    window.location.href = "/rooms";
+  };
+
+  const MessageBubble = ({ msg, isMe }: { msg: Message; isMe: boolean }) => (
+    <div
+      style={{
+        display: "flex",
+        width: "100%",
+        justifyContent: isMe ? "flex-end" : "flex-start",
+      }}
+    >
+      <div
+        style={{
+          background: isMe ? "#ef4444" : "#e5e7eb",
+          color: isMe ? "#fff" : "#111",
+          borderRadius: "0.5rem",
+          maxWidth: "20rem",
+          wordBreak: "break-word",
+          boxShadow: "0 2px 8px 0 rgba(0,0,0,0.08)",
+          marginLeft: isMe ? "auto" : undefined,
+          marginRight: !isMe ? "auto" : undefined,
+          padding: "0.5rem",
+          textAlign: isMe ? "right" : "left",
+          fontWeight: 400,
+        }}
+      >
+        <strong>{msg.sender.username}:</strong> {msg.content}
+      </div>
+    </div>
+  );
+
   if (!room) return <p className="text-white p-4">Loading...</p>;
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-4">
-      <h1 className="text-3xl font-bold text-white mb-4">{room.name}</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-3xl font-bold text-white">{room.name}</h1>
+        <button
+          onClick={handleLeave}
+          className="ml-4 px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600"
+        >
+          Leave Room
+        </button>
+      </div>
 
       <div className="flex-1 overflow-y-auto bg-white/10 rounded-xl p-4 space-y-2 mb-4">
-        {messages.map((msg) => {
-          const isMe = msg.sender._id === currentUserId;
-          return (
-            <div
-              key={msg._id}
-              className={`p-2 rounded-lg max-w-sm ${
-                isMe ? "ml-auto bg-blue-500 text-white" : "bg-white text-black"
-              }`}
-            >
-              <strong>{msg.sender.username}:</strong> {msg.content}
-            </div>
-          );
-        })}
+        {messages.map((msg) => (
+          <MessageBubble
+            key={msg._id}
+            msg={msg}
+            isMe={msg.sender._id === user?.id}
+          />
+        ))}
         <div ref={messagesEndRef} />
       </div>
 

@@ -4,7 +4,6 @@ import { socket } from "./socket";
 import LoginRegisterPage from "./pages/LoginRegister";
 import ChatRoom from "./pages/ChatRoom";
 import ProfilePage from "./pages/Profile";
-import JoinPrivate from "./pages/JoinPrivate";
 import Rooms from "./pages/Rooms";
 import SocketTest from "./components/SocketTest";
 import ProtectedRoute from "./components/ProtectedRoute";

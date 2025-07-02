@@ -1,6 +1,6 @@
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
-import * as cookie from "cookie"; // ✅ important ici
+import * as cookie from "cookie";
 import Message from "./models/Message";
 import Room from "./models/Room";
 import { Types } from "mongoose";
@@ -8,7 +8,7 @@ import { Types } from "mongoose";
 export const setupSocket = (io: Server) => {
   io.use((socket, next) => {
     const rawCookie = socket.handshake.headers.cookie || "";
-    const cookies = cookie.parse(rawCookie); // ✅ maintenant ça marche
+    const cookies = cookie.parse(rawCookie);
     const token = cookies.token;
 
     console.log("🛂 Token from cookie:", token);
