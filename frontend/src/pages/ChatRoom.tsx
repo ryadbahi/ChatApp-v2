@@ -1,9 +1,11 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import MessageBubble from "../components/MessageBubble";
 // AppLayout is now applied globally via ProtectedRoute
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "../api/axios";
 import { useChatRoom } from "../hooks/useChatRoom";
 import { useAuth } from "../context/AuthContext";
+import { FaPaperPlane } from "react-icons/fa";
 
 interface Room {
   _id: string;
@@ -84,34 +86,6 @@ const ChatRoom = () => {
     navigate("/rooms");
   };
 
-  const MessageBubble = ({ msg, isMe }: { msg: Message; isMe: boolean }) => (
-    <div
-      style={{
-        display: "flex",
-        width: "100%",
-        justifyContent: isMe ? "flex-end" : "flex-start",
-      }}
-    >
-      <div
-        style={{
-          background: isMe ? "#ef4444" : "#e5e7eb",
-          color: isMe ? "#fff" : "#111",
-          borderRadius: "0.5rem",
-          maxWidth: "20rem",
-          wordBreak: "break-word",
-          boxShadow: "0 2px 8px 0 rgba(0,0,0,0.08)",
-          marginLeft: isMe ? "auto" : undefined,
-          marginRight: !isMe ? "auto" : undefined,
-          padding: "0.5rem",
-          textAlign: isMe ? "right" : "left",
-          fontWeight: 400,
-        }}
-      >
-        <strong>{msg.sender.username}:</strong> {msg.content}
-      </div>
-    </div>
-  );
-
   if (!room) return <p className="text-white p-4">Loading...</p>;
 
   return (
@@ -126,7 +100,10 @@ const ChatRoom = () => {
         </button>
       </div>
       <div className="flex flex-col flex-1 min-h-0">
-        <div className="flex-1 min-h-0 overflow-y-auto bg-white/10 rounded-xl p-4 space-y-2 mb-4">
+        <div
+          className="flex-1 min-h-0 overflow-y-auto p-4 space-y-2 mb-4 bg-white/20 rounded-2xl border border-white/30 shadow-2xl backdrop-blur-3xl"
+          style={{ boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)" }}
+        >
           {messages.map((msg) => (
             <MessageBubble
               key={msg._id}
@@ -136,20 +113,22 @@ const ChatRoom = () => {
           ))}
           <div ref={messagesEndRef} />
         </div>
-        <div className="flex gap-2 mt-2 shrink-0">
+        <div className="flex gap-2 mt-2 shrink-0 bg-white/20 rounded-2xl border border-white/30 shadow-2xl backdrop-blur-3xl p-2">
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder="Type your message..."
-            className="flex-1 p-2 rounded-lg bg-white/30 text-white placeholder-white/70"
+            className="flex-1 p-2 rounded-lg bg-white/30 text-white placeholder-white/70 border-none outline-none backdrop-blur"
           />
           <button
             onClick={handleSend}
-            className="px-4 py-2 bg-white text-indigo-700 font-semibold rounded-lg hover:bg-white/80"
+            className="px-4 py-2 flex items-center justify-center bg-indigo-500 text-white font-semibold rounded-lg hover:bg-indigo-600 transition-colors shadow-md"
+            style={{ minWidth: 44, minHeight: 44 }}
+            aria-label="Send message"
           >
-            Send
+            <FaPaperPlane size={22} />
           </button>
         </div>
       </div>
