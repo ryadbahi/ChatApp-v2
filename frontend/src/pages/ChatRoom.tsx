@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useParams } from "react-router-dom";
+// AppLayout is now applied globally via ProtectedRoute
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "../api/axios";
 import { useChatRoom } from "../hooks/useChatRoom";
 import { useAuth } from "../context/AuthContext";
@@ -20,12 +21,14 @@ interface Message {
 }
 
 const ChatRoom = () => {
+  // Sidebar state is now handled by AppLayout
   const { roomId } = useParams<{ roomId: string }>();
   const [room, setRoom] = useState<Room | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!roomId) return;
@@ -78,7 +81,7 @@ const ChatRoom = () => {
   }, [newMessage, sendMessage]);
 
   const handleLeave = () => {
-    window.location.href = "/rooms";
+    navigate("/rooms");
   };
 
   const MessageBubble = ({ msg, isMe }: { msg: Message; isMe: boolean }) => (
@@ -112,8 +115,8 @@ const ChatRoom = () => {
   if (!room) return <p className="text-white p-4">Loading...</p>;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-4">
-      <div className="flex items-center justify-between mb-4">
+    <div className="flex flex-col flex-1 min-h-0 h-full">
+      <div className="flex items-center justify-between mb-4 shrink-0">
         <h1 className="text-3xl font-bold text-white">{room.name}</h1>
         <button
           onClick={handleLeave}
@@ -122,33 +125,33 @@ const ChatRoom = () => {
           Leave Room
         </button>
       </div>
-
-      <div className="flex-1 overflow-y-auto bg-white/10 rounded-xl p-4 space-y-2 mb-4">
-        {messages.map((msg) => (
-          <MessageBubble
-            key={msg._id}
-            msg={msg}
-            isMe={msg.sender._id === user?.id}
+      <div className="flex flex-col flex-1 min-h-0">
+        <div className="flex-1 min-h-0 overflow-y-auto bg-white/10 rounded-xl p-4 space-y-2 mb-4">
+          {messages.map((msg) => (
+            <MessageBubble
+              key={msg._id}
+              msg={msg}
+              isMe={msg.sender._id === user?.id}
+            />
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+        <div className="flex gap-2 mt-2 shrink-0">
+          <input
+            type="text"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            placeholder="Type your message..."
+            className="flex-1 p-2 rounded-lg bg-white/30 text-white placeholder-white/70"
           />
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
-
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          placeholder="Type your message..."
-          className="flex-1 p-2 rounded-lg bg-white/30 text-white placeholder-white/70"
-        />
-        <button
-          onClick={handleSend}
-          className="px-4 py-2 bg-white text-indigo-700 font-semibold rounded-lg hover:bg-white/80"
-        >
-          Send
-        </button>
+          <button
+            onClick={handleSend}
+            className="px-4 py-2 bg-white text-indigo-700 font-semibold rounded-lg hover:bg-white/80"
+          >
+            Send
+          </button>
+        </div>
       </div>
     </div>
   );

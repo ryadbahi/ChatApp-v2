@@ -17,9 +17,10 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
+const allowedOrigins = ["http://localhost:5173", "http://192.168.1.65:5173"];
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // Frontend
+    origin: allowedOrigins, // Frontend
     credentials: true,
   },
 });
@@ -28,7 +29,7 @@ const io = new Server(server, {
 setupSocket(io);
 
 // ✅ Middleware
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 
@@ -46,17 +47,28 @@ app.get("/", (req, res) => {
 app.use(errorHandler);
 
 // ✅ DB + server startup
-const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGODB_URI!;
+const PORT: number = Number(process.env.PORT) || 5000;
+const HOST: string = "0.0.0.0";
+const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/yourdb"; // Fallback URI
 
 mongoose
   .connect(MONGO_URI)
   .then(() => {
     console.log("✅ MongoDB connected");
-    server.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    server.listen(PORT, HOST, () => {
+      console.log(`🚀 Server running on http://${HOST}:${PORT}`);
     });
   })
   .catch((err) => {
     console.error("❌ MongoDB connection error:", err);
   });
+
+// Handle server errors
+server.on("error", (error) => {
+  console.error("Server error:", error);
+});
+
+// Handle unhandled promise rejections
+process.on("unhandledRejection", (err) => {
+  console.error("Unhandled Rejection:", err);
+});

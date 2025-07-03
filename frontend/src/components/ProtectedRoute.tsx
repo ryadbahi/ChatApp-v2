@@ -2,6 +2,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import type { JSX } from "react";
+import AppLayout from "./AppLayout";
 
 export default function ProtectedRoute({
   children,
@@ -14,5 +15,5 @@ export default function ProtectedRoute({
 
   if (!user) return <Navigate to="/login" replace />;
 
-  return children;
+  return <AppLayout>{children}</AppLayout>;
 }
