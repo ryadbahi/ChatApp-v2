@@ -115,19 +115,42 @@ export const updateProfile = async (
       return;
     }
 
-    const { username } = req.body;
+    const { username, email, password } = req.body;
 
     if (username) {
       user.username = username;
     }
 
+    if (email) {
+      user.email = email;
+    }
+
+    // Handle password update if provided
+    if (password && password.trim() !== "") {
+      user.password = await bcrypt.hash(password, 10);
+    }
+
     // ✅ Handle avatar image if uploaded
     if (req.file && req.file.buffer) {
-      const { secure_url } = await uploadToCloudinary(
-        req.file.buffer,
-        "avatars"
-      );
-      user.avatar = secure_url;
+      try {
+        console.log("Uploading avatar to Cloudinary...");
+        console.log("Cloudinary config:", {
+          cloudName: process.env.CLOUDINARY_CLOUD_NAME ? "Set" : "Not set",
+          apiKey: process.env.CLOUDINARY_API_KEY ? "Set" : "Not set",
+          apiSecret: process.env.CLOUDINARY_API_SECRET ? "Set" : "Not set",
+        });
+
+        const { secure_url } = await uploadToCloudinary(
+          req.file.buffer,
+          "avatars"
+        );
+        user.avatar = secure_url;
+        console.log("Avatar uploaded successfully:", secure_url);
+      } catch (uploadError) {
+        console.error("Error uploading to Cloudinary:", uploadError);
+        res.status(500).json({ msg: "Failed to upload avatar" });
+        return;
+      }
     }
 
     await user.save();
@@ -139,6 +162,7 @@ export const updateProfile = async (
       avatar: user.avatar,
     });
   } catch (err) {
+    console.error("Profile update error:", err);
     res.status(500).json({ msg: "Failed to update profile" });
   }
 };

@@ -17,10 +17,9 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
-const allowedOrigins = ["http://localhost:5173", "http://192.168.1.65:5173"];
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins, // Frontend
+    origin: "http://localhost:5173", // Frontend
     credentials: true,
   },
 });
@@ -29,7 +28,7 @@ const io = new Server(server, {
 setupSocket(io);
 
 // ✅ Middleware
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 
@@ -48,15 +47,14 @@ app.use(errorHandler);
 
 // ✅ DB + server startup
 const PORT: number = Number(process.env.PORT) || 5000;
-const HOST: string = "0.0.0.0";
 const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/yourdb"; // Fallback URI
 
 mongoose
   .connect(MONGO_URI)
   .then(() => {
     console.log("✅ MongoDB connected");
-    server.listen(PORT, HOST, () => {
-      console.log(`🚀 Server running on http://${HOST}:${PORT}`);
+    server.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
   })
   .catch((err) => {

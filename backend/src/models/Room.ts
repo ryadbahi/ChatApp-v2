@@ -7,7 +7,6 @@ export interface IRoom extends Document {
   visibility: "public" | "private" | "secret";
   password?: string;
   createdBy: Types.ObjectId;
-  // members: Types.ObjectId[];
   comparePassword(candidate: string): Promise<boolean>;
 }
 
@@ -17,6 +16,13 @@ const roomSchema = new Schema<IRoom>(
       type: String,
       required: true,
       trim: true,
+      minlength: [3, "Room name must be at least 3 characters long"],
+      maxlength: [30, "Room name cannot exceed 30 characters"],
+      match: [
+        /^[a-zA-Z0-9-_\s]+$/,
+        "Room name can only contain letters, numbers, spaces, hyphens and underscores",
+      ],
+      index: true, // For faster searching
     },
     visibility: {
       type: String,

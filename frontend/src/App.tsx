@@ -5,6 +5,7 @@ import LoginRegisterPage from "./pages/LoginRegister";
 import ChatRoom from "./pages/ChatRoom";
 import ProfilePage from "./pages/Profile";
 import Rooms from "./pages/Rooms";
+import JoinPrivate from "./pages/JoinPrivate";
 import SocketTest from "./components/SocketTest";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -32,7 +33,6 @@ function App(): React.JSX.Element {
       <Route path="/socket" element={<SocketTest />} />
 
       {/* Protected routes */}
-
       <Route
         path="/rooms"
         element={
@@ -46,6 +46,14 @@ function App(): React.JSX.Element {
         element={
           <ProtectedRoute>
             <ChatRoom />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/join/:roomId"
+        element={
+          <ProtectedRoute>
+            <JoinPrivate />
           </ProtectedRoute>
         }
       />

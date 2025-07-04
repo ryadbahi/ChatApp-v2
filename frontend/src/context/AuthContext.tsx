@@ -23,6 +23,7 @@ interface AuthContextType {
     password: string;
   }) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (updatedUser: User) => void;
 }
 
 // Create context with a default value
@@ -123,8 +124,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Update user function to update the user state after profile edits
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, register, logout, updateUser }}
+    >
       {children}
     </AuthContext.Provider>
   );
