@@ -246,9 +246,9 @@ export const setupSocket = (io: Server) => {
     });
 
     // Handle messages
-    socket.on("sendMessage", async ({ roomId, message }) => {
+    socket.on("sendMessage", async ({ roomId, message, imageUrl }) => {
       try {
-        if (!message?.trim() || !rooms[roomId]) return;
+        if ((!message?.trim() && !imageUrl) || !rooms[roomId]) return;
 
         const room = await Room.findById(roomId);
         if (!room) return;
@@ -257,6 +257,7 @@ export const setupSocket = (io: Server) => {
           room: roomId,
           sender: userId,
           content: message,
+          imageUrl,
         });
 
         const populated = await msg.populate("sender", "username avatar");

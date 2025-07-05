@@ -5,7 +5,6 @@ import axios from "../api/axios";
 import { useChatRoom } from "../hooks/useChatRoom";
 import { useAuth } from "../context/AuthContext";
 import {
-  FaPaperPlane,
   FaEdit,
   FaTrash,
   FaLock,
@@ -269,9 +268,9 @@ const ChatRoom = () => {
   }, [messages]);
 
   const handleSend = useCallback(
-    (message: string) => {
-      if (!message.trim()) return;
-      sendMessage(message);
+    (message: string, imageUrl?: string) => {
+      if (!message.trim() && !imageUrl) return;
+      sendMessage(message, imageUrl);
     },
     [sendMessage]
   );

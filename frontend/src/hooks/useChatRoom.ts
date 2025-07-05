@@ -27,9 +27,9 @@ export function useChatRoom(
   }, [roomId]);
 
   const sendMessage = useCallback(
-    (message: string) => {
+    (message: string, imageUrl?: string) => {
       if (!roomId || !socket.connected) return;
-      socket.emit("sendMessage", { roomId, message });
+      socket.emit("sendMessage", { roomId, message, imageUrl });
     },
     [roomId]
   );

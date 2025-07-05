@@ -37,6 +37,10 @@ app.use("/api/auth", authRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/messages", messageRoutes);
 
+// Image/GIF upload route
+import uploadRoute from "./routes/upload.route";
+app.use("/api/upload", uploadRoute);
+
 // ✅ Test route
 app.get("/", (req, res) => {
   res.send("API is running");

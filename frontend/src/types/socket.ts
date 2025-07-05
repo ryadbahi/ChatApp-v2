@@ -8,7 +8,11 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  sendMessage: (payload: { roomId: string; message: string }) => void;
+  sendMessage: (payload: {
+    roomId: string;
+    message: string;
+    imageUrl?: string;
+  }) => void;
   joinRoom: (roomId: string) => void;
   leaveRoom: (roomId: string) => void;
   getRoomUsers: (

@@ -21,6 +21,7 @@ export interface CreateRoomData {
 export interface Message {
   _id: string;
   content: string;
+  imageUrl?: string;
   sender: User;
   room: string; // Room ID
   createdAt: string;

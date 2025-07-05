@@ -1,6 +1,6 @@
 import React, { useCallback, Suspense, lazy } from "react";
 import { Slate, Editable } from "slate-react";
-import { FaPaperPlane } from "react-icons/fa";
+import { FaPaperPlane, FaRegFileImage } from "react-icons/fa";
 import ToolbarButton from "./ToolbarButton";
 import ColorPicker from "./ColorPicker";
 import { Element, Leaf } from "./SlateElements";
@@ -10,7 +10,7 @@ import { useRichMessageEditor } from ".//useRichMessageEditor";
 const EmojiPicker = lazy(() => import("emoji-picker-react"));
 
 interface RichMessageInputProps {
-  onSend: (message: string) => void;
+  onSend: (message: string, imageUrl?: string) => void;
 }
 
 const serializeToHTML = (nodes: any[]): string => {
@@ -54,6 +54,7 @@ const RichMessageInput: React.FC<RichMessageInputProps> = ({ onSend }) => {
     handleChange,
   } = useRichMessageEditor();
 
+  // Handle sending text message
   const handleSend = () => {
     const plainText = editor.children
       .map((n: any) => n.children?.map((c: any) => c.text).join(""))
@@ -65,10 +66,42 @@ const RichMessageInput: React.FC<RichMessageInputProps> = ({ onSend }) => {
     clearEditor();
   };
 
+  // Handle image upload
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Optionally: validate file type/size here
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data?.url) {
+        onSend("", data.url);
+      }
+    } catch (err) {
+      alert("Failed to upload image");
+    }
+    e.target.value = ""; // Reset file input
+  };
+
   return (
     <div className="flex flex-col w-full relative">
       {/* Toolbar */}
       <div className="flex items-center gap-1 mb-2 p-1 bg-black/20 rounded-lg">
+        {/* Image upload button */}
+        <label className="ml-2 pt-2 pb-2 cursor-pointer px-2 py-1 rounded text-indigo-700 bg-white transition-all">
+          <FaRegFileImage size={18} />
+          <input
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={handleFileChange}
+          />
+        </label>
         <ToolbarButton
           icon={<b>B</b>}
           isActive={isMarkActive("bold")}
