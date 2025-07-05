@@ -1,4 +1,4 @@
-# AuraRooms
+# AuraRooms (WORK IN PROGRESS)
 
 A modern, full-stack real-time chat application with advanced features, robust security, and a beautiful UI. Built with React, Vite, TypeScript, Node.js, Express, MongoDB, Socket.IO, and Cloudinary.
 
@@ -108,7 +108,6 @@ AuraRooms/
 │   ├── package.json
 │   ├── vite.config.ts
 │   └── ...
-├── .env (example only, not committed)
 └── README.md
 ```
 
