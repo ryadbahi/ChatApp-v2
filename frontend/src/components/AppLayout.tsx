@@ -302,9 +302,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         >
           <div className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <JoinSecretRoom
-              onSuccess={(roomId) => {
+              onSuccess={() => {
                 setShowJoinSecret(false);
-                navigate(`/chat/${roomId}`);
+                // Don't navigate here - let JoinSecretRoom handle navigation with proper state
               }}
               onCancel={() => setShowJoinSecret(false)}
             />

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { FaLock, FaArrowRight, FaExclamationTriangle } from "react-icons/fa";
-import { useRoom } from "../context/RoomContext";
+import { useNavigate } from "react-router-dom";
 import { joinSecretRoomByName } from "../api/rooms";
 
 interface JoinSecretRoomProps {
@@ -13,7 +13,7 @@ const JoinSecretRoom = ({ onSuccess, onCancel }: JoinSecretRoomProps) => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { joinRoomWithLoading } = useRoom();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,13 +27,41 @@ const JoinSecretRoom = ({ onSuccess, onCancel }: JoinSecretRoomProps) => {
     setIsLoading(true);
 
     try {
+      console.log("[JoinSecretRoom] Attempting to join secret room:", {
+        name: roomName,
+      });
+
       // Call backend to join secret room by name
       const result = await joinSecretRoomByName({ name: roomName, password });
-      // Navigate to chat room if successful
-      await joinRoomWithLoading(result.id, { delay: 500 });
+      console.log("[JoinSecretRoom] Successfully joined secret room:", result);
+
+      // Navigate directly to chat room with room data in state
+      console.log("[JoinSecretRoom] Navigating to chat room with state:", {
+        roomData: result,
+      });
+      navigate(`/chat/${result.id}`, {
+        state: { roomData: result },
+      });
+
       onSuccess?.(result.id, roomName);
     } catch (err: any) {
-      setError("Bad credentials. Please try again.");
+      console.error("[JoinSecretRoom] Failed to join secret room:", err);
+      console.error("[JoinSecretRoom] Error details:", {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message,
+      });
+
+      if (err.response?.status === 403) {
+        setError("Invalid room name or password. Please try again.");
+      } else if (err.response?.status === 400) {
+        setError("All fields are required.");
+      } else if (err.response?.status === 429) {
+        setError("Too many attempts. Please try again later.");
+      } else {
+        setError("Failed to join room. Please try again.");
+      }
+
       setIsLoading(false);
     }
   };

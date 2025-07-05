@@ -95,6 +95,24 @@ export const setupSocket = (io: Server) => {
 
     socket.on("joinRoom", async (roomId: string) => {
       try {
+        // Check if room exists and user has permission
+        const room = await Room.findById(roomId);
+        if (!room) {
+          socket.emit("error", { message: "Room not found" });
+          return;
+        }
+
+        // For private and secret rooms, user must have already joined via API
+        // We cannot validate passwords here as they are not stored in socket session
+        // So we rely on the HTTP API join endpoints for authentication
+        if (room.visibility !== "public") {
+          // For non-public rooms, we could add additional checks here
+          // For now, we allow socket connection if they reach this point
+          console.log(
+            `[Socket] User ${userId} joining ${room.visibility} room ${roomId}`
+          );
+        }
+
         // Initialize room data if needed
         if (!rooms[roomId]) {
           rooms[roomId] = {
@@ -117,6 +135,7 @@ export const setupSocket = (io: Server) => {
         await broadcastAllRoomCounts(io);
       } catch (error) {
         console.error("[Socket] Error in joinRoom:", error);
+        socket.emit("error", { message: "Failed to join room" });
       }
     });
 

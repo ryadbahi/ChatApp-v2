@@ -42,13 +42,6 @@ export const joinRoom = async (
   return response.data;
 };
 
-export const getRoomById = async (roomId: string) => {
-  const response = await axios.get(`/api/rooms/${roomId}`, {
-    withCredentials: true,
-  });
-  return response.data as Room;
-};
-
 export const editRoom = async (roomId: string, data: CreateRoomData) => {
   const response = await axios.put(`/api/rooms/${roomId}`, data, {
     withCredentials: true,
@@ -67,7 +60,7 @@ export const joinSecretRoomByName = async (data: {
   name: string;
   password: string;
 }) => {
-  const response = await axios.post("/api/rooms/join-secret", data, {
+  const response = await axios.post("/api/rooms/secret", data, {
     withCredentials: true,
   });
   return response.data;

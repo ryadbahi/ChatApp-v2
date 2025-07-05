@@ -79,19 +79,22 @@ export const RoomProvider: React.FC<RoomProviderProps> = ({ children }) => {
         await new Promise((resolve) => setTimeout(resolve, options.delay));
       }
 
+      let roomData;
       // If a password or name is provided, we need to join the room first
       if (options?.password || options?.name) {
         const { joinRoom } = await import("../api/rooms");
-        await joinRoom(roomId, {
+        roomData = await joinRoom(roomId, {
           password: options.password,
           name: options.name,
         });
       }
 
-      // Navigate to the room
+      // Navigate to the room, passing the room data if we have it
       await new Promise((r) => setTimeout(r, 200));
       console.log("[joinRoomWithLoading] navigating to", `/chat/${roomId}`);
-      navigate(`/chat/${roomId}`);
+      navigate(`/chat/${roomId}`, {
+        state: roomData ? { roomData } : undefined,
+      });
       console.log("[joinRoomWithLoading] navigation done");
     } catch (error) {
       console.error("[RoomContext] Error joining room:", error);

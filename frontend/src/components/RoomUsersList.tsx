@@ -40,7 +40,7 @@ const RoomUsersList: React.FC<RoomUsersListProps> = ({ roomId }) => {
   });
 
   return (
-    <div className="bg-white/10 border border-white/20 rounded-xl p-4 mb-4">
+    <div className="flex-1 min-h-[26vh] h-full overflow-y-auto p-4 space-y-2 mb-4 bg-white/20 rounded-2xl border border-white/30 shadow-2xl backdrop-blur-3xl">
       <h3 className="text-lg font-semibold text-white mb-2">Connected Users</h3>
       <ul className="space-y-2">
         {sortedUsers.map((u: RoomUser) => (

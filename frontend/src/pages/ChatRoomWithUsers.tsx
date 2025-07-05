@@ -38,7 +38,7 @@ const ChatRoomWithUsers: React.FC = () => {
 
   return (
     <div className="flex flex-col md:flex-row gap-4 h-full">
-      <div className="md:w-1/4 w-full">
+      <div className="md:w-1/7">
         <RoomUsersList roomId={roomId} />
       </div>
       <div className="flex-1">

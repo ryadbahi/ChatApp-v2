@@ -183,7 +183,11 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ msg, isMe }) => {
             } time.`}
             onKeyDown={(e) => e.key === "Enter" && handleBubbleClick()}
           >
-            {msg.content}
+            {/* Render message content with HTML support */}
+            <div
+              dangerouslySetInnerHTML={{ __html: msg.content }}
+              className="message-content"
+            />
 
             {/* Time display with animation */}
             <div

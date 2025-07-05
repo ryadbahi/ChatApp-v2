@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import MessageBubble from "../components/MessageBubble";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "../api/axios";
 import { useChatRoom } from "../hooks/useChatRoom";
 import { useAuth } from "../context/AuthContext";
@@ -14,8 +14,9 @@ import {
   FaExclamationTriangle,
 } from "react-icons/fa";
 import type { Room, Message, CreateRoomData } from "../types/types";
-import { joinRoom, getRoomById, editRoom, deleteRoom } from "../api/rooms";
+import { joinRoom, editRoom, deleteRoom } from "../api/rooms";
 import clsx from "clsx";
+import RichMessageInput from "../components/RichMessageInput";
 
 interface EditRoomModalProps {
   room: Room;
@@ -151,9 +152,9 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({
 
 const ChatRoom = () => {
   const { roomId } = useParams<{ roomId: string }>();
+  const location = useLocation();
   const [room, setRoom] = useState<Room | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState("");
   const [isCreator, setIsCreator] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -164,36 +165,82 @@ const ChatRoom = () => {
   useEffect(() => {
     if (!roomId || !user) return;
 
+    console.log("[ChatRoom] useEffect triggered", { roomId, user: user.id });
+    console.log("[ChatRoom] Location state:", location.state);
+
+    // Check if we have room data from navigation state (from successful password join)
+    const navigationState = location.state as { roomData?: Room };
+    if (navigationState?.roomData) {
+      console.log(
+        "[ChatRoom] Using room data from navigation state:",
+        navigationState.roomData
+      );
+      setRoom(navigationState.roomData);
+      setIsCreator(navigationState.roomData.createdBy._id === user.id);
+
+      // Clear the navigation state to prevent issues on refresh
+      window.history.replaceState({}, "", window.location.pathname);
+
+      return;
+    }
+
+    console.log(
+      "[ChatRoom] No navigation state found, attempting to join room"
+    );
+
     const fetchRoomAndJoin = async () => {
       try {
-        // First try to get the room to check if we've already joined
-        const roomData = await getRoomById(roomId);
-        setRoom(roomData);
-        setIsCreator(roomData.createdBy._id === user.id);
-      } catch (err) {
-        // If we can't get the room, try to join it
-        try {
-          const joinedRoom = await joinRoom(roomId, {});
-          setRoom(joinedRoom);
-          setIsCreator(joinedRoom.createdBy._id === user.id);
-        } catch (err: any) {
-          console.error("[ChatRoom] Failed to join room", err);
+        console.log(
+          "[ChatRoom] Attempting to join room with empty credentials"
+        );
+        // Try to join with empty credentials first (works for public rooms and creators)
+        const joinedRoom = await joinRoom(roomId, {});
+        console.log("[ChatRoom] Successfully joined room:", joinedRoom);
+        setRoom(joinedRoom);
+        setIsCreator(joinedRoom.createdBy._id === user.id);
+      } catch (err: any) {
+        console.error("[ChatRoom] Failed to access room", err);
 
-          if (err.response?.status === 429) {
+        if (err.response?.status === 429) {
+          setError(
+            "You've made too many attempts to join rooms. Please try again later."
+          );
+        } else if (
+          err.response?.status === 400 ||
+          err.response?.status === 403
+        ) {
+          // For private rooms, redirect to password page
+          // For secret rooms, we'd need additional logic to detect the room type
+          // Since we can't determine the room type without access, redirect to join page
+          const errorMsg = err.response?.data?.msg || "";
+
+          if (errorMsg.includes("Password required")) {
+            // This is a private room - redirect to join page
+            navigate(`/join/${roomId}`);
+            return;
+          } else if (
+            errorMsg.includes("Name and password required") ||
+            errorMsg.includes("credentials")
+          ) {
+            // This is likely a secret room - redirect to rooms with message
             setError(
-              "You've made too many attempts to join rooms. Please try again later."
+              "This is a secret room. Please use 'Join Secret Room' from the main menu."
             );
           } else {
-            setError(err.response?.data?.message || "Failed to join room");
+            setError(
+              "This room requires permission to access. Please join through the proper channel."
+            );
           }
-
-          setRoom(null);
+        } else {
+          setError(err.response?.data?.msg || "Failed to access room");
         }
+
+        setRoom(null);
       }
     };
 
     fetchRoomAndJoin();
-  }, [roomId, user]);
+  }, [roomId, user, navigate, location.state]);
 
   useEffect(() => {
     if (!roomId) return;
@@ -221,11 +268,13 @@ const ChatRoom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = useCallback(() => {
-    if (!newMessage.trim()) return;
-    sendMessage(newMessage);
-    setNewMessage("");
-  }, [newMessage, sendMessage]);
+  const handleSend = useCallback(
+    (message: string) => {
+      if (!message.trim()) return;
+      sendMessage(message);
+    },
+    [sendMessage]
+  );
 
   const handleLeave = () => {
     navigate("/rooms");
@@ -382,22 +431,7 @@ const ChatRoom = () => {
           <div ref={messagesEndRef} />
         </div>
         <div className="flex gap-2 mt-2 shrink-0 bg-white/20 rounded-2xl border border-white/30 shadow-2xl backdrop-blur-3xl p-2">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Type your message..."
-            className="flex-1 p-2 rounded-lg bg-white/30 text-white placeholder-white/70 border-none outline-none backdrop-blur"
-          />
-          <button
-            onClick={handleSend}
-            className="px-4 py-2 flex items-center justify-center bg-indigo-500 text-white font-semibold rounded-lg hover:bg-indigo-600 transition-colors shadow-md"
-            style={{ minWidth: 44, minHeight: 44 }}
-            aria-label="Send message"
-          >
-            <FaPaperPlane size={22} />
-          </button>
+          <RichMessageInput onSend={handleSend} />
         </div>
       </div>
     </div>

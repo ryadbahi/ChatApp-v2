@@ -13,15 +13,12 @@ export const protect = async (
       res.status(401).json({ msg: "No token provided" });
       return;
     }
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
       id: string;
     };
-
     req.userId = new Types.ObjectId(decoded.id);
-
     next();
-  } catch (err) {
+  } catch {
     res.status(401).json({ msg: "Invalid token" });
   }
 };
