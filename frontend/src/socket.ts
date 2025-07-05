@@ -5,21 +5,37 @@ import type {
   ClientToServerEvents,
 } from "./types/socket";
 
-// Récupère le token dans les cookies (même méthode que ton backend)
-const token = document.cookie
-  .split("; ")
-  .find((row) => row.startsWith("token="))
-  ?.split("=")[1];
-
-console.log("[socket.ts] Token fetched from cookie:", token);
+// Get token from cookies
+const getToken = () =>
+  document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("token="))
+    ?.split("=")[1];
 
 export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
   "http://localhost:5001",
   {
     auth: {
-      token, // 👈 C’est ce qui doit apparaître dans socket.handshake.auth
+      token: getToken(),
     },
     withCredentials: true,
     autoConnect: false,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
   }
 );
+
+// Handle reconnection
+socket.on("connect_error", (error) => {
+  console.error("[Socket] Connection error:", error.message);
+});
+
+socket.on("connect", () => {
+  console.log("[Socket] Connected");
+  // Update auth token on reconnect
+  socket.auth = { token: getToken() };
+});
+
+socket.on("disconnect", (reason) => {
+  console.log("[Socket] Disconnected:", reason);
+});

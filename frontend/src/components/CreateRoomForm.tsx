@@ -2,7 +2,11 @@ import React, { useState } from "react";
 import { createRoom } from "../api/rooms";
 
 interface CreateRoomFormProps {
-  onSuccess?: (room: any, joinAfterCreate: boolean) => void;
+  onSuccess?: (
+    room: any,
+    joinAfterCreate: boolean,
+    resetLoading?: () => void
+  ) => void;
   onCancel?: () => void;
 }
 
@@ -31,8 +35,8 @@ const CreateRoomForm: React.FC<CreateRoomFormProps> = ({
       return;
     }
 
-    if (name.length < 3 || name.length > 50) {
-      setError("Room name must be between 3 and 50 characters");
+    if (name.length < 3 || name.length > 15) {
+      setError("Room name must be between 3 and 15 characters");
       setIsLoading(false);
       return;
     }
@@ -64,9 +68,18 @@ const CreateRoomForm: React.FC<CreateRoomFormProps> = ({
       console.log("Room created successfully:", createdRoom);
 
       // Only call onSuccess if we have a valid room response
-      if (createdRoom && (createdRoom._id || createdRoom.id)) {
-        // Don't set loading to false here - let the parent handle modal closing
-        onSuccess?.(createdRoom, joinAfterCreate);
+      if (createdRoom) {
+        const roomWithId = {
+          ...createdRoom,
+          _id: createdRoom._id || createdRoom.id,
+        };
+        console.log("Calling onSuccess with:", roomWithId);
+
+        // Create a callback to reset loading state
+        const resetLoading = () => setIsLoading(false);
+
+        // Pass the reset function along with the room data
+        onSuccess?.(roomWithId, joinAfterCreate, resetLoading);
       } else {
         setError("Invalid room response from server");
         setIsLoading(false);
@@ -104,8 +117,11 @@ const CreateRoomForm: React.FC<CreateRoomFormProps> = ({
             type="text"
             id="name"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              if (e.target.value.length <= 15) setName(e.target.value);
+            }}
             placeholder="Enter room name"
+            maxLength={15}
             className="w-full px-4 py-2 rounded-lg bg-black/20 border border-white/20 text-white placeholder-white/60
                      backdrop-blur-sm focus:ring-2 focus:ring-pink-400/30 focus:border-pink-400/50 transition-all outline-none"
           />

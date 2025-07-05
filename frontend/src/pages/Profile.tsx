@@ -1,8 +1,13 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import axiosInstance from "../api/axios";
+import { FaUserEdit } from "react-icons/fa";
 
-const Profile = () => {
+interface ProfileProps {
+  onCancel?: () => void;
+}
+
+const Profile = ({ onCancel }: ProfileProps) => {
   const { user, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [username, setUsername] = useState(user?.username || "");
@@ -89,7 +94,7 @@ const Profile = () => {
             onClick={() => setIsEditing(true)}
             className="px-4 py-2 bg-blue-600/80 hover:bg-blue-700/80 text-white rounded-lg transition"
           >
-            Edit Profile
+            <FaUserEdit />
           </button>
         )}
       </div>
@@ -235,7 +240,10 @@ const Profile = () => {
           <div className="flex justify-end mt-6 gap-3">
             <button
               type="button"
-              onClick={() => setIsEditing(false)}
+              onClick={() => {
+                setIsEditing(false);
+                onCancel?.();
+              }}
               className="px-4 py-2 border border-white/20 text-white rounded-lg hover:bg-white/5 transition"
               disabled={isLoading}
             >

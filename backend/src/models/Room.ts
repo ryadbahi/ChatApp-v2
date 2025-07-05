@@ -17,7 +17,7 @@ const roomSchema = new Schema<IRoom>(
       required: true,
       trim: true,
       minlength: [3, "Room name must be at least 3 characters long"],
-      maxlength: [30, "Room name cannot exceed 30 characters"],
+      maxlength: [15, "Room name cannot exceed 15 characters"],
       match: [
         /^[a-zA-Z0-9-_\s]+$/,
         "Room name can only contain letters, numbers, spaces, hyphens and underscores",

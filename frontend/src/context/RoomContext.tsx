@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState } from "react";
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
+import { socket } from "../socket";
 
 interface JoinRoomOptions {
   password?: string;
@@ -8,12 +9,18 @@ interface JoinRoomOptions {
   name?: string;
 }
 
+// Room creation event listeners
+type RoomCreatedListener = (room: any) => void;
+
 interface RoomContextType {
   isJoiningRoom: boolean;
   joinRoomWithLoading: (
     roomId: string,
     options?: JoinRoomOptions
   ) => Promise<void>;
+  notifyRoomCreated: (room: any) => void;
+  addRoomCreatedListener: (listener: RoomCreatedListener) => void;
+  removeRoomCreatedListener: (listener: RoomCreatedListener) => void;
 }
 
 const RoomContext = createContext<RoomContextType | undefined>(undefined);
@@ -32,7 +39,28 @@ interface RoomProviderProps {
 
 export const RoomProvider: React.FC<RoomProviderProps> = ({ children }) => {
   const [isJoiningRoom, setIsJoiningRoom] = useState(false);
+  const [roomCreatedListeners, setRoomCreatedListeners] = useState<
+    RoomCreatedListener[]
+  >([]);
   const navigate = useNavigate();
+
+  const notifyRoomCreated = (room: any) => {
+    roomCreatedListeners.forEach((listener) => listener(room));
+  };
+
+  const addRoomCreatedListener = React.useCallback(
+    (listener: RoomCreatedListener) => {
+      setRoomCreatedListeners((prev) => [...prev, listener]);
+    },
+    []
+  );
+
+  const removeRoomCreatedListener = React.useCallback(
+    (listener: RoomCreatedListener) => {
+      setRoomCreatedListeners((prev) => prev.filter((l) => l !== listener));
+    },
+    []
+  );
 
   const joinRoomWithLoading = async (
     roomId: string,
@@ -41,6 +69,11 @@ export const RoomProvider: React.FC<RoomProviderProps> = ({ children }) => {
     setIsJoiningRoom(true);
 
     try {
+      // Ensure socket connection
+      if (!socket.connected) {
+        socket.connect();
+      }
+
       // Add optional delay for smooth UX
       if (options?.delay) {
         await new Promise((resolve) => setTimeout(resolve, options.delay));
@@ -56,8 +89,12 @@ export const RoomProvider: React.FC<RoomProviderProps> = ({ children }) => {
       }
 
       // Navigate to the room
+      await new Promise((r) => setTimeout(r, 200));
+      console.log("[joinRoomWithLoading] navigating to", `/chat/${roomId}`);
       navigate(`/chat/${roomId}`);
+      console.log("[joinRoomWithLoading] navigation done");
     } catch (error) {
+      console.error("[RoomContext] Error joining room:", error);
       setIsJoiningRoom(false);
       throw error; // Let the calling component handle the error
     }
@@ -69,7 +106,15 @@ export const RoomProvider: React.FC<RoomProviderProps> = ({ children }) => {
   };
 
   return (
-    <RoomContext.Provider value={{ isJoiningRoom, joinRoomWithLoading }}>
+    <RoomContext.Provider
+      value={{
+        isJoiningRoom,
+        joinRoomWithLoading,
+        notifyRoomCreated,
+        addRoomCreatedListener,
+        removeRoomCreatedListener,
+      }}
+    >
       {children}
       {/* Global Loading Overlay */}
       {isJoiningRoom && (

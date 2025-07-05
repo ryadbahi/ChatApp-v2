@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+
+// Show number of connected users on the card
 import { FaEdit, FaTrash, FaGlobe, FaLock, FaEyeSlash } from "react-icons/fa";
 import type { Room, CreateRoomData } from "../types/types";
 import { editRoom, deleteRoom } from "../api/rooms";
@@ -10,6 +12,7 @@ interface RoomCardProps {
   onUpdate?: () => void;
   onRoomEdited?: () => void;
   onRoomDeleted?: () => void;
+  userCount?: number;
 }
 
 interface EditRoomModalProps {
@@ -218,6 +221,7 @@ const RoomCard: React.FC<RoomCardProps> = ({
   onUpdate,
   onRoomEdited,
   onRoomDeleted,
+  userCount = 0,
 }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -326,8 +330,16 @@ const RoomCard: React.FC<RoomCardProps> = ({
         </div>
 
         <div className="text-sm text-white/70 mt-auto flex justify-between items-center">
-          <p>📅 {new Date(room.createdAt).toLocaleDateString()}</p>
-
+          <div className="flex items-center gap-3">
+            <p>📅 {new Date(room.createdAt).toLocaleDateString()}</p>
+            {room.visibility === "public" && (
+              <span className="ml-2 px-2 py-1 bg-blue-500/20 rounded text-blue-200 text-xs">
+                👥{" "}
+                {userCount !== null && userCount !== undefined ? userCount : 0}{" "}
+                online
+              </span>
+            )}
+          </div>
           {isCreated && (
             <div className="flex gap-2 room-actions">
               <button

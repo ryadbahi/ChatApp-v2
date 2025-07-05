@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { socket } from "./socket";
 import LoginRegisterPage from "./pages/LoginRegister";
-import ChatRoom from "./pages/ChatRoom";
+import ChatRoomWithUsers from "./pages/ChatRoomWithUsers";
 import ProfilePage from "./pages/Profile";
 import Rooms from "./pages/Rooms";
 import JoinPrivate from "./pages/JoinPrivate";
@@ -45,7 +45,7 @@ function App(): React.JSX.Element {
         path="/chat/:roomId"
         element={
           <ProtectedRoute>
-            <ChatRoom />
+            <ChatRoomWithUsers />
           </ProtectedRoute>
         }
       />

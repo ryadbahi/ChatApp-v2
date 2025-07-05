@@ -1,12 +1,29 @@
 import CreateRoomForm from "../components/CreateRoomForm";
 import AppLayout from "../components/AppLayout";
 import { useNavigate } from "react-router-dom";
+import { useRoom } from "../context/RoomContext";
 
 const CreateRoomPage = () => {
   const navigate = useNavigate();
+  const { notifyRoomCreated } = useRoom();
 
-  const onRoomCreated = () => {
-    navigate("/rooms");
+  const onRoomCreated = (room: any, joinAfterCreate: boolean) => {
+    console.log("[CreateRoomPage] Room created successfully:", room);
+
+    // Notify all listeners about the new room
+    notifyRoomCreated(room);
+
+    if (joinAfterCreate && room?._id) {
+      // Navigate to the room if user wants to join
+      if (room.visibility === "private") {
+        navigate(`/join/${room._id}`);
+      } else {
+        navigate(`/chat/${room._id}`);
+      }
+    } else {
+      // Otherwise go back to rooms list
+      navigate("/rooms");
+    }
   };
 
   return (

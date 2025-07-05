@@ -5,9 +5,11 @@ import { useAuth } from "../context/AuthContext";
 import { useRoom } from "../context/RoomContext";
 import type { ReactNode } from "react";
 import { useState, useRef, useEffect } from "react";
+import { useIsRoomsPage } from "../hooks/useIsRoomsPage";
 import RoomSearch from "./RoomSearch";
 import CreateRoomForm from "./CreateRoomForm";
 import JoinSecretRoom from "./JoinSecretRoom";
+import Profile from "../pages/Profile";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -39,14 +41,16 @@ const NavbarButton = ({
 const AppLayout = ({ children }: AppLayoutProps) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { joinRoomWithLoading } = useRoom();
+  const { joinRoomWithLoading, notifyRoomCreated } = useRoom();
   const [showSearch, setShowSearch] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [showJoinSecret, setShowJoinSecret] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const searchModalRef = useRef<HTMLDivElement>(null);
   const createModalRef = useRef<HTMLDivElement>(null);
+  const isRoomsPage = useIsRoomsPage();
 
   // Handle clicks outside of profile menu
   useEffect(() => {
@@ -106,16 +110,18 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               }}
             />
 
-            {/* Create Room */}
-            <NavbarButton
-              icon={FaPlus}
-              label="Create Room"
-              onClick={() => {
-                setShowCreate((prev) => !prev);
-                setShowSearch(false);
-                setShowProfileMenu(false);
-              }}
-            />
+            {/* Create Room (hide on /rooms) */}
+            {!isRoomsPage && (
+              <NavbarButton
+                icon={FaPlus}
+                label="Create Room"
+                onClick={() => {
+                  setShowCreate((prev) => !prev);
+                  setShowSearch(false);
+                  setShowProfileMenu(false);
+                }}
+              />
+            )}
 
             {/* Join Secret Room */}
             <NavbarButton
@@ -188,7 +194,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                   <li
                     className="px-4 py-2 text-white hover:bg-white/20 cursor-pointer flex items-center gap-2"
                     onClick={() => {
-                      navigate("/profile");
+                      setShowProfileModal(true);
                       setShowProfileMenu(false);
                     }}
                   >
@@ -264,8 +270,14 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             onClick={(e) => e.stopPropagation()}
           >
             <CreateRoomForm
-              onSuccess={(room, joinAfterCreate) => {
+              onSuccess={(room, joinAfterCreate, resetLoading) => {
+                console.log("[AppLayout] Room created successfully:", room);
+
+                // Notify all listeners (like Rooms.tsx) about the new room
+                notifyRoomCreated(room);
+
                 setShowCreate(false);
+
                 if (joinAfterCreate && room && room._id) {
                   if (room.visibility === "private") {
                     navigate(`/join/${room._id}`);
@@ -273,6 +285,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                     navigate(`/chat/${room._id}`);
                   }
                 }
+
+                resetLoading?.(); // Reset the form's loading state
               }}
               onCancel={() => setShowCreate(false)}
             />
@@ -288,12 +302,27 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         >
           <div className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <JoinSecretRoom
-              onSuccess={(roomId, roomName) => {
+              onSuccess={(roomId) => {
                 setShowJoinSecret(false);
                 navigate(`/chat/${roomId}`);
               }}
               onCancel={() => setShowJoinSecret(false)}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Profile Modal */}
+      {showProfileModal && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setShowProfileModal(false)}
+        >
+          <div
+            className="w-full max-w-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Profile onCancel={() => setShowProfileModal(false)} />
           </div>
         </div>
       )}
