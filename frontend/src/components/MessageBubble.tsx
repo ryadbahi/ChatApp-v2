@@ -188,7 +188,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ msg, isMe }) => {
               <img
                 src={msg.imageUrl}
                 alt="Sent media"
-                className="max-w-xs max-h-60 rounded-lg shadow-md my-2"
+                className="max-w-xs max-h-30 rounded-lg shadow-md my-2"
                 style={{ display: "block" }}
               />
             ) : (

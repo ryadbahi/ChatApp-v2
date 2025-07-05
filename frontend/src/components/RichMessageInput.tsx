@@ -1,4 +1,8 @@
-import React, { useCallback, Suspense, lazy } from "react";
+import React, { useCallback, Suspense, lazy, useState } from "react";
+import GifPicker from "gif-picker-react";
+
+// Use environment variable for Tenor API key
+const TENOR_API_KEY = import.meta.env.VITE_TENOR_API_KEY;
 import { Slate, Editable } from "slate-react";
 import { FaPaperPlane, FaRegFileImage } from "react-icons/fa";
 import ToolbarButton from "./ToolbarButton";
@@ -40,6 +44,17 @@ const serializeToHTML = (nodes: any[]): string => {
 };
 
 const RichMessageInput: React.FC<RichMessageInputProps> = ({ onSend }) => {
+  // GIF picker state
+  const [showGifDropdown, setShowGifDropdown] = useState(false);
+  {
+  }
+  // Handle GIF select from gif-picker-react
+  const handleGifSelect = (gif: any) => {
+    if (gif?.url) {
+      onSend("", gif.url);
+      setShowGifDropdown(false);
+    }
+  };
   const {
     editor,
     showEmoji,
@@ -91,7 +106,29 @@ const RichMessageInput: React.FC<RichMessageInputProps> = ({ onSend }) => {
   return (
     <div className="flex flex-col w-full relative">
       {/* Toolbar */}
-      <div className="flex items-center gap-1 mb-2 p-1 bg-black/20 rounded-lg">
+      <div className="flex items-center gap-1 mb-2 p-1 bg-black/20 rounded-lg relative">
+        {/* GIF picker button */}
+        <button
+          type="button"
+          className="ml-2 pt-2 pb-2 px-2 rounded text-pink-700 bg-white transition-all font-bold"
+          style={{ minWidth: 36 }}
+          onClick={() => setShowGifDropdown((v) => !v)}
+          aria-label="Pick a GIF"
+        >
+          GIF
+        </button>
+
+        {/* GIF picker-react dropdown */}
+        {showGifDropdown && (
+          <div className="absolute bottom-full mb-2 left-0 z-50">
+            <GifPicker
+              onGifClick={handleGifSelect}
+              width={320}
+              height={400}
+              tenorApiKey={TENOR_API_KEY}
+            />
+          </div>
+        )}
         {/* Image upload button */}
         <label className="ml-2 pt-2 pb-2 cursor-pointer px-2 py-1 rounded text-indigo-700 bg-white transition-all">
           <FaRegFileImage size={18} />
