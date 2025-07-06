@@ -1,4 +1,11 @@
-import React, { useCallback, Suspense, lazy, useState } from "react";
+import React, {
+  useCallback,
+  Suspense,
+  lazy,
+  useState,
+  useRef,
+  useEffect,
+} from "react";
 import GifPicker from "gif-picker-react";
 
 // Use environment variable for Tenor API key
@@ -46,19 +53,70 @@ const serializeToHTML = (nodes: any[]): string => {
 const RichMessageInput: React.FC<RichMessageInputProps> = ({ onSend }) => {
   // GIF picker state
   const [showGifDropdown, setShowGifDropdown] = useState(false);
-  {
-  }
+  const [showEmoji, setShowEmoji] = useState(false);
+  const gifDropdownRef = useRef<HTMLDivElement>(null);
+  const emojiDropdownRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<any>(null);
+
+  // Focus helper
+  const focusEditor = () => {
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+  };
+
+  // Handle outside click for GIF and Emoji pickers
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+
+      // Don't close if clicking inside the GIF picker
+      if (
+        showGifDropdown &&
+        gifDropdownRef.current &&
+        gifDropdownRef.current.contains(target)
+      ) {
+        return;
+      }
+
+      // Don't close if clicking inside the Emoji picker
+      if (
+        showEmoji &&
+        emojiDropdownRef.current &&
+        emojiDropdownRef.current.contains(target)
+      ) {
+        return;
+      }
+
+      setShowGifDropdown(false);
+      setShowEmoji(false);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [showGifDropdown, showEmoji]);
+
+  useEffect(() => {
+    if (showEmoji) {
+      setTimeout(() => {
+        focusEditor();
+      }, 50);
+    }
+  }, [showEmoji]);
+
   // Handle GIF select from gif-picker-react
   const handleGifSelect = (gif: any) => {
     if (gif?.url) {
       onSend("", gif.url);
       setShowGifDropdown(false);
+      focusEditor();
     }
   };
+
   const {
     editor,
-    showEmoji,
-    setShowEmoji,
     getActiveColor,
     isMarkActive,
     toggleMark,
@@ -68,6 +126,13 @@ const RichMessageInput: React.FC<RichMessageInputProps> = ({ onSend }) => {
     initialValue,
     handleChange,
   } = useRichMessageEditor();
+
+  // Persistent emoji picker handler
+  const handleEmojiClickPersistent = (emojiData: any) => {
+    handleEmojiClick(emojiData);
+    focusEditor();
+    // Do NOT close the emoji picker here
+  };
 
   // Handle sending text message
   const handleSend = () => {
@@ -112,7 +177,11 @@ const RichMessageInput: React.FC<RichMessageInputProps> = ({ onSend }) => {
           type="button"
           className="ml-2 pt-2 pb-2 px-2 rounded text-pink-700 bg-white transition-all font-bold"
           style={{ minWidth: 36 }}
-          onClick={() => setShowGifDropdown((v) => !v)}
+          onClick={() => {
+            setShowGifDropdown((v) => !v);
+            setShowEmoji(false);
+            focusEditor();
+          }}
           aria-label="Pick a GIF"
         >
           GIF
@@ -120,7 +189,10 @@ const RichMessageInput: React.FC<RichMessageInputProps> = ({ onSend }) => {
 
         {/* GIF picker-react dropdown */}
         {showGifDropdown && (
-          <div className="absolute bottom-full mb-2 left-0 z-50">
+          <div
+            className="absolute bottom-full mb-2 left-0 z-50"
+            ref={gifDropdownRef}
+          >
             <GifPicker
               onGifClick={handleGifSelect}
               width={320}
@@ -130,7 +202,10 @@ const RichMessageInput: React.FC<RichMessageInputProps> = ({ onSend }) => {
           </div>
         )}
         {/* Image upload button */}
-        <label className="ml-2 pt-2 pb-2 cursor-pointer px-2 py-1 rounded text-indigo-700 bg-white transition-all">
+        <label
+          className="ml-2 pt-2 pb-2 cursor-pointer px-2 py-1 rounded text-indigo-700 bg-white transition-all"
+          onClick={focusEditor}
+        >
           <FaRegFileImage size={18} />
           <input
             type="file"
@@ -145,6 +220,7 @@ const RichMessageInput: React.FC<RichMessageInputProps> = ({ onSend }) => {
           onClick={(e) => {
             e.preventDefault();
             toggleMark("bold");
+            focusEditor();
           }}
           colorClass="bg-pink-600 text-white border-pink-600"
         />
@@ -154,6 +230,7 @@ const RichMessageInput: React.FC<RichMessageInputProps> = ({ onSend }) => {
           onClick={(e) => {
             e.preventDefault();
             toggleMark("italic");
+            focusEditor();
           }}
           colorClass="bg-blue-500 text-white border-blue-500"
         />
@@ -163,44 +240,42 @@ const RichMessageInput: React.FC<RichMessageInputProps> = ({ onSend }) => {
           onClick={(e) => {
             e.preventDefault();
             toggleMark("underline");
+            focusEditor();
           }}
           colorClass="bg-green-500 text-white border-green-500"
         />
         <ColorPicker
           getActiveColor={getActiveColor}
-          toggleColor={toggleColor}
+          toggleColor={(color) => {
+            toggleColor(color);
+            setTimeout(() => focusEditor(), 0);
+          }}
         />
         <div className="relative ml-2">
           <button
             type="button"
-            className="px-2 py-1 rounded bg-pink-500 text-white hover:bg-pink-600 transition-all"
+            className="px-2 py-1 rounded bg-pink-500 text-white hover:bg-pink-600"
             onMouseDown={(e) => {
               e.preventDefault();
-              setShowEmoji((v: boolean) => !v);
+              setShowEmoji((v) => !v);
             }}
           >
             😊
           </button>
           {showEmoji && (
-            <div className="absolute bottom-full mb-2 left-0 z-50">
-              <Suspense
-                fallback={
-                  <div className="w-80 h-80 bg-white/90 rounded-lg border border-gray-200 shadow-lg flex items-center justify-center">
-                    <div className="flex flex-col items-center space-y-2">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
-                      <div className="text-gray-600 text-sm">
-                        Loading emojis...
-                      </div>
-                    </div>
-                  </div>
-                }
-              >
+            <div
+              className="absolute bottom-full mb-2 left-0 z-50"
+              ref={emojiDropdownRef}
+            >
+              <Suspense fallback={<div>Loading…</div>}>
                 <EmojiPicker
-                  onEmojiClick={handleEmojiClick}
+                  onEmojiClick={handleEmojiClickPersistent}
                   lazyLoadEmojis={true}
                   previewConfig={{ showPreview: false }}
-                  width={300}
-                  height={350}
+                  autoFocusSearch={false}
+                  searchDisabled={false}
+                  width={450}
+                  height={450}
                 />
               </Suspense>
             </div>
@@ -216,6 +291,7 @@ const RichMessageInput: React.FC<RichMessageInputProps> = ({ onSend }) => {
             onChange={handleChange}
           >
             <Editable
+              ref={editorRef}
               className="p-3 rounded-lg bg-white/30 text-white placeholder-white/70 border-none outline-none backdrop-blur min-h-[48px] max-h-32 overflow-y-hidden resize-none"
               renderElement={useCallback(
                 (props: any) => (

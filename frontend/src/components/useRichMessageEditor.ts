@@ -6,7 +6,7 @@ const initialValue = [{ type: "paragraph", children: [{ text: "" }] }];
 
 export function useRichMessageEditor() {
   const editor = useMemo(() => withReact(createEditor()), []);
-  const [showEmoji, setShowEmoji] = useState(false);
+  // Remove showEmoji and setShowEmoji from here; manage in RichMessageInput only
   const [currentMarks, setCurrentMarks] = useState<any>({});
 
   // Update current marks on every change
@@ -40,7 +40,7 @@ export function useRichMessageEditor() {
   const handleEmojiClick = (emojiData: any) => {
     const emoji = emojiData.emoji;
     Editor.insertText(editor, emoji);
-    setShowEmoji(false);
+    // Do not close emoji picker here
   };
 
   const clearEditor = () => {
@@ -55,8 +55,6 @@ export function useRichMessageEditor() {
 
   return {
     editor,
-    showEmoji,
-    setShowEmoji,
     getActiveColor,
     isMarkActive,
     toggleMark,
