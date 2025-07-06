@@ -5,6 +5,9 @@ export interface ServerToClientEvents {
   roomUsersUpdate: (data: { users: User[] }) => void;
   roomUserCount: (data: { roomId: string; count: number }) => void;
   allRoomCounts: (counts: Record<string, number>) => void;
+  inactivityWarning: (data: { message: string; timeLeft: number }) => void;
+  inactivityDisconnect: (data: { message: string }) => void;
+  error: (data: { message: string }) => void;
 }
 
 export interface ClientToServerEvents {
@@ -22,4 +25,5 @@ export interface ClientToServerEvents {
   getPublicRoomsUserCounts: (
     callback: (data: Record<string, number>) => void
   ) => void;
+  userActivity: () => void;
 }

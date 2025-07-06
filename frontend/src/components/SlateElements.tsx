@@ -1,5 +1,3 @@
-import React from "react";
-
 export const Element = ({ attributes, children, element }: any) => {
   switch (element.type) {
     case "bulleted-list":

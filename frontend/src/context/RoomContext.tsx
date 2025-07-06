@@ -8,7 +8,6 @@ import React, {
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { socket } from "../socket";
-import { useAuth } from "../context/AuthContext";
 
 interface JoinRoomOptions {
   password?: string;
