@@ -14,6 +14,7 @@ A modern, full-stack real-time chat application with advanced features, robust s
 - **Password hashing**: All passwords are hashed using bcryptjs before storage.
 - **Rate limiting**: Auth endpoints are protected from brute-force attacks with express-rate-limit.
 - **Session management**: Automatic logout on token expiry, and refresh token rotation for added safety.
+- **Inactivity timeout system**: Users are automatically disconnected after a period of inactivity (no meaningful actions like joining rooms or sending messages). A warning is shown before disconnection with a "Stay Connected" button to extend the session.
 - **Message bubble effects** (3D, gradients, shadows, etc.)
 
 ### Chat Rooms
@@ -36,6 +37,7 @@ A modern, full-stack real-time chat application with advanced features, robust s
 - **Typing indicators**: See when other users are typing in real time.
 - **Message read receipts**: Optional per room, shows who has read each message.
 - **Message bubble effects**: Modern 3D, gradient, and shadow effects for a beautiful chat experience.
+- **Direct messaging** (WORK IN PROGRESS): Private one-on-one conversations between users with real-time delivery, read receipts, and message history. Users can search for other users and start direct conversations.
 
 ### UI/UX
 

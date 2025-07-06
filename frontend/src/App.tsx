@@ -6,6 +6,8 @@ import ChatRoomWithUsers from "./pages/ChatRoomWithUsers";
 import ProfilePage from "./pages/Profile";
 import Rooms from "./pages/Rooms";
 import JoinPrivate from "./pages/JoinPrivate";
+import DirectMessages from "./pages/DirectMessages";
+import DirectMessageChat from "./pages/DirectMessageChat";
 import SocketTest from "./components/SocketTest";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -57,12 +59,29 @@ function App(): React.JSX.Element {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/profile"
         element={
           <ProtectedRoute>
             <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Direct Messages routes */}
+      <Route
+        path="/direct-messages"
+        element={
+          <ProtectedRoute>
+            <DirectMessages />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/direct-message/:userId"
+        element={
+          <ProtectedRoute>
+            <DirectMessageChat />
           </ProtectedRoute>
         }
       />

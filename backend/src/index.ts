@@ -37,6 +37,10 @@ app.use("/api/auth", authRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/messages", messageRoutes);
 
+// Direct message routes
+import directMessageRoutes from "./routes/directMessage.route";
+app.use("/api/direct-messages", directMessageRoutes);
+
 // Image/GIF upload route
 import uploadRoute from "./routes/upload.route";
 app.use("/api/upload", uploadRoute);

@@ -4,6 +4,7 @@ import * as cookie from "cookie";
 import Message from "./models/Message";
 import Room from "./models/Room";
 import User from "./models/User";
+import DirectMessage from "./models/DirectMessage";
 import { Types } from "mongoose";
 
 interface RoomData {
@@ -435,6 +436,79 @@ export const setupSocket = (io: Server) => {
       console.log(
         `[Inactivity] User ${userId} requested session extension via userActivity event`
       );
+    });
+
+    // Handle direct messages
+    socket.on(
+      "sendDirectMessage",
+      async ({ recipientId, message, imageUrl }) => {
+        updateUserActivity(userId, io, "sendDirectMessage"); // Track meaningful activity
+        try {
+          if ((!message?.trim() && !imageUrl) || !recipientId) return;
+
+          // Verify recipient exists
+          const recipient = await User.findById(recipientId);
+          if (!recipient) return;
+
+          // Create direct message
+          const dm = await DirectMessage.create({
+            sender: userId,
+            recipient: recipientId,
+            content: message,
+            imageUrl,
+          });
+
+          const populated = await dm.populate([
+            { path: "sender", select: "username avatar" },
+            { path: "recipient", select: "username avatar" },
+          ]);
+
+          // Send to both sender and recipient if they're online
+          const senderSockets = Array.from(userSockets[userId] || []);
+          const recipientSockets = Array.from(userSockets[recipientId] || []);
+
+          [...senderSockets, ...recipientSockets].forEach((socketId) => {
+            io.to(socketId).emit("newDirectMessage", populated);
+          });
+
+          console.log(
+            `[DirectMessage] Message sent from ${userId} to ${recipientId}`
+          );
+        } catch (error) {
+          console.error("[Socket] Error in sendDirectMessage:", error);
+        }
+      }
+    );
+
+    // Handle direct message read receipts
+    socket.on("markDirectMessageAsRead", async ({ otherUserId }) => {
+      try {
+        if (!otherUserId) return;
+
+        // Mark messages as read
+        await DirectMessage.updateMany(
+          {
+            sender: otherUserId,
+            recipient: userId,
+            readAt: null,
+          },
+          {
+            readAt: new Date(),
+          }
+        );
+
+        // Notify the sender that their messages were read
+        const otherUserSockets = Array.from(userSockets[otherUserId] || []);
+        otherUserSockets.forEach((socketId) => {
+          io.to(socketId).emit("directMessagesRead", { readByUserId: userId });
+        });
+
+        console.log(
+          `[DirectMessage] Messages marked as read by ${userId} from ${otherUserId}`
+        );
+      } catch (error) {
+        console.error("[Socket] Error in markDirectMessageAsRead:", error);
+      }
     });
   });
 };

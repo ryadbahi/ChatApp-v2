@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { socket } from "../socket";
+import { useNavigate } from "react-router-dom";
 // Join all rooms on the list for live user counts
 import type { Room } from "../types/types";
 import RoomCard from "../components/RoomCard";
@@ -7,6 +8,7 @@ import Toast from "../components/Toast";
 import { getRooms, getCreatedRooms } from "../api/rooms";
 import CreateRoomForm from "../components/CreateRoomForm";
 import { useRoom } from "../context/RoomContext";
+import { FiMessageSquare, FiUsers } from "react-icons/fi";
 
 interface TabProps {
   label: string;
@@ -62,6 +64,7 @@ const RoomGrid: React.FC<{
 };
 
 const Rooms = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"all" | "created">("all");
   const [allRooms, setAllRooms] = useState<Room[]>([]);
   const [createdRooms, setCreatedRooms] = useState<Room[]>([]);
@@ -272,6 +275,34 @@ const Rooms = () => {
       )}
 
       <div className="w-full max-w-6xl space-y-8">
+        {/* Navigation Bar */}
+        <div className="flex items-center justify-between bg-white/10 backdrop-blur-sm rounded-lg p-4">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => navigate("/rooms")}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                window.location.pathname === "/rooms"
+                  ? "bg-white/20 text-white"
+                  : "text-white/70 hover:bg-white/10"
+              }`}
+            >
+              <FiUsers className="w-5 h-5" />
+              <span>Rooms</span>
+            </button>
+            <button
+              onClick={() => navigate("/direct-messages")}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                window.location.pathname.startsWith("/direct-messages")
+                  ? "bg-white/20 text-white"
+                  : "text-white/70 hover:bg-white/10"
+              }`}
+            >
+              <FiMessageSquare className="w-5 h-5" />
+              <span>Messages</span>
+            </button>
+          </div>
+        </div>
+
         <div className="flex justify-between items-center">
           <h1 className="text-4xl font-bold text-white">Chat Rooms</h1>
           <button
