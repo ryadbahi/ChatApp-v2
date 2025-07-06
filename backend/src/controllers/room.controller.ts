@@ -26,3 +26,4 @@ export const joinSecretRoomByName = wrap(S.joinSecretRoomByName);
 export const getUserRooms = wrap(S.getUserRooms);
 export const deleteRoom = wrap(S.deleteRoom);
 export const editRoom = wrap(S.editRoom);
+export const getRoomById = wrap(S.getRoomById);

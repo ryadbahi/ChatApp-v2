@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FaLock, FaArrowRight, FaExclamationTriangle } from "react-icons/fa";
 import { useRoom } from "../context/RoomContext";
+import { useAuth } from "../context/AuthContext";
+import { getRoomById } from "../api/rooms";
 
 const JoinPrivate = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -10,6 +12,25 @@ const JoinPrivate = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { joinRoomWithLoading } = useRoom();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const checkIfCreator = async () => {
+      if (!roomId || !user) return;
+
+      try {
+        const room = await getRoomById(roomId);
+        if (room.createdBy === user.id) {
+          await joinRoomWithLoading(roomId);
+        }
+      } catch (error) {
+        console.log(
+          "Could not check room creator, proceeding with password entry"
+        );
+      }
+    };
+    checkIfCreator();
+  }, [roomId, user, joinRoomWithLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,6 +41,7 @@ const JoinPrivate = () => {
 
     try {
       await joinRoomWithLoading(roomId, { password, delay: 500 });
+      console.log("[JoinPrivate] Submitting password for room", roomId);
     } catch (err: any) {
       console.error("[JoinPrivateRoom] Failed to join room:", err);
 

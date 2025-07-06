@@ -1,7 +1,14 @@
-import React, { createContext, useContext, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { socket } from "../socket";
+import { useAuth } from "../context/AuthContext";
 
 interface JoinRoomOptions {
   password?: string;
@@ -9,7 +16,6 @@ interface JoinRoomOptions {
   name?: string;
 }
 
-// Room creation event listeners
 type RoomCreatedListener = (room: any) => void;
 
 interface RoomContextType {
@@ -39,25 +45,23 @@ interface RoomProviderProps {
 
 export const RoomProvider: React.FC<RoomProviderProps> = ({ children }) => {
   const [isJoiningRoom, setIsJoiningRoom] = useState(false);
-  const [roomCreatedListeners, setRoomCreatedListeners] = useState<
-    RoomCreatedListener[]
-  >([]);
+  const listenersRef = useRef<RoomCreatedListener[]>([]);
   const navigate = useNavigate();
 
   const notifyRoomCreated = (room: any) => {
-    roomCreatedListeners.forEach((listener) => listener(room));
+    listenersRef.current.forEach((listener) => listener(room));
   };
 
-  const addRoomCreatedListener = React.useCallback(
+  const addRoomCreatedListener = useCallback(
     (listener: RoomCreatedListener) => {
-      setRoomCreatedListeners((prev) => [...prev, listener]);
+      listenersRef.current.push(listener);
     },
     []
   );
 
-  const removeRoomCreatedListener = React.useCallback(
+  const removeRoomCreatedListener = useCallback(
     (listener: RoomCreatedListener) => {
-      setRoomCreatedListeners((prev) => prev.filter((l) => l !== listener));
+      listenersRef.current = listenersRef.current.filter((l) => l !== listener);
     },
     []
   );
@@ -66,46 +70,50 @@ export const RoomProvider: React.FC<RoomProviderProps> = ({ children }) => {
     roomId: string,
     options?: JoinRoomOptions
   ) => {
+    if (!roomId) throw new Error("Invalid room ID");
+
     setIsJoiningRoom(true);
 
     try {
-      // Ensure socket connection
+      // Ensure socket is connected
       if (!socket.connected) {
         socket.connect();
+        await new Promise<void>((resolve) => {
+          socket.once("connect", () => resolve());
+        });
       }
 
-      // Add optional delay for smooth UX
+      // Optional UX delay (e.g., for animations)
       if (options?.delay) {
         await new Promise((resolve) => setTimeout(resolve, options.delay));
       }
 
-      let roomData;
-      // If a password or name is provided, we need to join the room first
+      let roomData: any = null;
+      console.log();
+
+      // For private or secret rooms, credentials are required
       if (options?.password || options?.name) {
         const { joinRoom } = await import("../api/rooms");
         roomData = await joinRoom(roomId, {
           password: options.password,
           name: options.name,
         });
+
+        // Navigate only after successful credential validation
+        navigate(`/chat/${roomId}`, {
+          state: { roomData },
+        });
+      } else {
+        // For public rooms, navigate immediately (no credentials needed)
+        navigate(`/chat/${roomId}`);
       }
 
-      // Navigate to the room, passing the room data if we have it
-      await new Promise((r) => setTimeout(r, 200));
-      console.log("[joinRoomWithLoading] navigating to", `/chat/${roomId}`);
-      navigate(`/chat/${roomId}`, {
-        state: roomData ? { roomData } : undefined,
-      });
-      console.log("[joinRoomWithLoading] navigation done");
+      setIsJoiningRoom(false);
     } catch (error) {
       console.error("[RoomContext] Error joining room:", error);
       setIsJoiningRoom(false);
-      throw error; // Let the calling component handle the error
+      throw error; // Let calling component handle the error
     }
-
-    // Keep loading state for a bit after navigation to ensure smooth transition
-    setTimeout(() => {
-      setIsJoiningRoom(false);
-    }, 500);
   };
 
   return (
@@ -119,7 +127,8 @@ export const RoomProvider: React.FC<RoomProviderProps> = ({ children }) => {
       }}
     >
       {children}
-      {/* Global Loading Overlay */}
+
+      {/* Global Joining Overlay */}
       {isJoiningRoom && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999]">
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 shadow-2xl">

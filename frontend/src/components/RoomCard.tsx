@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 // Show number of connected users on the card
 import { FaEdit, FaTrash, FaGlobe, FaLock, FaEyeSlash } from "react-icons/fa";
 import type { Room, CreateRoomData } from "../types/types";
 import { editRoom, deleteRoom } from "../api/rooms";
 import { useRoom } from "../context/RoomContext";
+import { useAuth } from "../context/AuthContext";
 
 interface RoomCardProps {
   room: Room;
@@ -226,6 +228,8 @@ const RoomCard: React.FC<RoomCardProps> = ({
   const [showEditModal, setShowEditModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { joinRoomWithLoading } = useRoom();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleCardClick = async (e: React.MouseEvent) => {
     // Don't navigate if clicking on action buttons
@@ -235,6 +239,17 @@ const RoomCard: React.FC<RoomCardProps> = ({
     }
 
     try {
+      // For private or secret rooms, redirect to join page (unless user is creator)
+      if (room.visibility === "private" || room.visibility === "secret") {
+        if (user && room.createdBy._id === user.id) {
+          await joinRoomWithLoading(room._id, { delay: 300 });
+          return;
+        }
+        navigate(`/join/${room._id}`);
+        return;
+      }
+
+      // For public rooms, join directly
       await joinRoomWithLoading(room._id, { delay: 300 });
     } catch (error) {
       console.error("[RoomCard] Failed to join room:", error);

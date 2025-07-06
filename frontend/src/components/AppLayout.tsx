@@ -94,7 +94,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               to="/rooms"
               className="text-white text-xl font-bold mr-4 md:mr-8"
             >
-              ChatApp
+              AuraRooms
             </Link>
           </div>
 

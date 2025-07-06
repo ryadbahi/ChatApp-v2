@@ -209,3 +209,23 @@ export const editRoom = async (req: Request<{ id: string }>, res: Response) => {
     .populate("createdBy", "username");
   res.json(updated);
 };
+
+export const getRoomById = async (
+  req: Request<{ id: string }>,
+  res: Response
+) => {
+  const roomId = req.params.id;
+  if (!Types.ObjectId.isValid(roomId)) {
+    return sendError(res, 400, "Invalid room ID");
+  }
+
+  const room = await Room.findById(roomId)
+    .select("-password")
+    .populate("createdBy", "username");
+
+  if (!room) {
+    return sendError(res, 404, "Room not found");
+  }
+
+  res.json(room);
+};

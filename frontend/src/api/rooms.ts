@@ -65,3 +65,10 @@ export const joinSecretRoomByName = async (data: {
   });
   return response.data;
 };
+
+export const getRoomById = async (roomId: string) => {
+  const response = await axios.get(`/api/rooms/${roomId}`, {
+    withCredentials: true,
+  });
+  return response.data;
+};

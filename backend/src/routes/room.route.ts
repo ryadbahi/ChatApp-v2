@@ -13,5 +13,6 @@ router.post("/secret", C.joinSecretRoomByName);
 router.get("/", C.getUserRooms);
 router.delete("/:id", C.deleteRoom);
 router.patch("/:id", C.editRoom);
+router.get("/:id", C.getRoomById);
 
 export default router;

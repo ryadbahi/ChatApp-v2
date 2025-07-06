@@ -13,18 +13,19 @@ const RoomUsersList: React.FC<RoomUsersListProps> = ({ roomId }) => {
   const [users, setUsers] = useState<RoomUser[]>([]);
 
   useEffect(() => {
-    // Always join the room to receive updates
     socket.emit("joinRoom", roomId);
-    // Request current users on mount
-    socket.emit("getRoomUsers", roomId, (data: { users: RoomUser[] }) => {
+    socket.emit("getRoomUsers", roomId, (data) => {
+      console.log("[RoomUsersList] getRoomUsers callback", data);
       setUsers(data.users || []);
     });
     // Listen for updates
     const handleUpdate = (data: { users: RoomUser[] }) => {
+      console.log("[RoomUsersList] roomUsersUpdate", data);
       setUsers(data.users || []);
     };
     socket.on("roomUsersUpdate", handleUpdate);
     return () => {
+      console.log("[RoomUsersList] Unmount: emitting leaveRoom", roomId);
       socket.off("roomUsersUpdate", handleUpdate);
       // Optionally leave the room on unmount
       socket.emit("leaveRoom", roomId);
