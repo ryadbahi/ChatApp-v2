@@ -8,7 +8,7 @@ import Toast from "../components/Toast";
 import { getRooms, getCreatedRooms } from "../api/rooms";
 import CreateRoomForm from "../components/CreateRoomForm";
 import { useRoom } from "../context/RoomContext";
-import { FiMessageSquare, FiUsers } from "react-icons/fi";
+import { FiUsers } from "react-icons/fi";
 
 interface TabProps {
   label: string;
@@ -288,17 +288,6 @@ const Rooms = () => {
             >
               <FiUsers className="w-5 h-5" />
               <span>Rooms</span>
-            </button>
-            <button
-              onClick={() => navigate("/direct-messages")}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                window.location.pathname.startsWith("/direct-messages")
-                  ? "bg-white/20 text-white"
-                  : "text-white/70 hover:bg-white/10"
-              }`}
-            >
-              <FiMessageSquare className="w-5 h-5" />
-              <span>Messages</span>
             </button>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import MessageBubble from "../components/MessageBubble";
+import UserActionDropdown from "../components/UserActionDropdown";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "../api/axios";
 import { useChatRoom } from "../hooks/useChatRoom";
@@ -12,7 +13,7 @@ import {
   FaEyeSlash,
   FaExclamationTriangle,
 } from "react-icons/fa";
-import type { Room, Message, CreateRoomData } from "../types/types";
+import type { Room, Message, CreateRoomData, User } from "../types/types";
 import { joinRoom, editRoom, deleteRoom } from "../api/rooms";
 import clsx from "clsx";
 import RichMessageInput from "../components/RichMessageInput";
@@ -157,6 +158,8 @@ const ChatRoom = () => {
   const [isCreator, setIsCreator] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -311,6 +314,26 @@ const ChatRoom = () => {
     }
   };
 
+  const handleUserClick = (clickedUser: User, event: React.MouseEvent) => {
+    // Don't show dropdown for current user
+    if (clickedUser._id === user?.id) return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    setDropdownPosition({
+      x: rect.left + rect.width / 2,
+      y: rect.bottom + 10,
+    });
+    setSelectedUser(clickedUser);
+  };
+
+  const handleCloseDropdown = () => {
+    setSelectedUser(null);
+  };
+
+  const handleOpenDM = (userId: string) => {
+    navigate(`/direct-messages/${userId}`);
+  };
+
   // Error state
   if (error) {
     return (
@@ -413,26 +436,30 @@ const ChatRoom = () => {
           className="flex-1 min-h-0 overflow-y-auto p-4 space-y-2 mb-4 bg-white/20 rounded-2xl border border-white/30 shadow-2xl backdrop-blur-3xl"
           style={{ boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)" }}
         >
-          {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-white/70">
-              <p>No messages yet</p>
-              <p className="text-sm mt-1">Be the first to say something!</p>
-            </div>
-          ) : (
-            messages.map((msg) => (
-              <MessageBubble
-                key={msg._id}
-                msg={msg}
-                isMe={msg.sender._id === user?.id}
-              />
-            ))
-          )}
+          {messages.map((msg) => (
+            <MessageBubble
+              key={msg._id}
+              msg={msg}
+              isMe={msg.sender._id === user?.id}
+              onUserClick={handleUserClick}
+            />
+          ))}
           <div ref={messagesEndRef} />
         </div>
         <div className="flex gap-2 mt-2 shrink-0 bg-white/20 rounded-2xl border border-white/30 shadow-2xl backdrop-blur-3xl p-2">
           <RichMessageInput onSend={handleSend} />
         </div>
       </div>
+
+      {selectedUser && (
+        <UserActionDropdown
+          user={selectedUser}
+          isOpen={!!selectedUser}
+          onClose={handleCloseDropdown}
+          onOpenDM={handleOpenDM}
+          position={dropdownPosition}
+        />
+      )}
     </div>
   );
 };

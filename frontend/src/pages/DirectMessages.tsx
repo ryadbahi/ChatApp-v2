@@ -3,15 +3,14 @@ import { useNavigate } from "react-router-dom";
 import {
   getDirectMessageContacts,
   searchUsersForDM,
-  type DirectMessageContact,
-  type User,
 } from "../api/directMessages";
+import type { User, DMThread } from "../types/types";
 import Toast from "../components/Toast";
 import { FiSearch, FiMessageCircle, FiPlus } from "react-icons/fi";
 
 const DirectMessages: React.FC = () => {
   const navigate = useNavigate();
-  const [contacts, setContacts] = useState<DirectMessageContact[]>([]);
+  const [contacts, setContacts] = useState<DMThread[]>([]);
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -81,7 +80,7 @@ const DirectMessages: React.FC = () => {
   };
 
   const UserAvatar: React.FC<{
-    user: User | DirectMessageContact;
+    user: User;
     size?: string;
   }> = ({ user, size = "w-12 h-12" }) =>
     user.avatar ? (
@@ -185,13 +184,15 @@ const DirectMessages: React.FC = () => {
               <div className="space-y-2">
                 {contacts.map((contact) => (
                   <button
-                    key={contact._id}
-                    onClick={() => navigate(`/direct-messages/${contact._id}`)}
+                    key={contact.otherUser._id}
+                    onClick={() =>
+                      navigate(`/direct-messages/${contact.otherUser._id}`)
+                    }
                     className="w-full p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
                   >
                     <div className="flex items-center">
                       <div className="relative">
-                        <UserAvatar user={contact} />
+                        <UserAvatar user={contact.otherUser} />
                         {contact.unreadCount > 0 && (
                           <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                             {contact.unreadCount > 9
@@ -203,16 +204,17 @@ const DirectMessages: React.FC = () => {
                       <div className="ml-3 flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <p className="font-medium text-gray-900 dark:text-white truncate">
-                            {contact.username}
+                            {contact.otherUser.username}
                           </p>
                           <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {formatTime(contact.lastMessage.createdAt)}
+                            {contact.lastMessage &&
+                              formatTime(contact.lastMessage.createdAt)}
                           </span>
                         </div>
                         <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                          {contact.lastMessage.imageUrl
+                          {contact.lastMessage?.imageUrl
                             ? "📷 Image"
-                            : contact.lastMessage.content}
+                            : contact.lastMessage?.content}
                         </p>
                       </div>
                     </div>

@@ -10,8 +10,10 @@ import DirectMessages from "./pages/DirectMessages";
 import DirectMessageChat from "./pages/DirectMessageChat";
 import SocketTest from "./components/SocketTest";
 import ProtectedRoute from "./components/ProtectedRoute";
+//import { useAuth } from "./context/AuthContext";
 
 function App(): React.JSX.Element {
+  //const { user, loading } = useAuth();
   useEffect(() => {
     const token = document.cookie
       .split("; ")
@@ -86,8 +88,9 @@ function App(): React.JSX.Element {
         }
       />
 
-      {/* Default fallback */}
-      <Route path="*" element={<Navigate to="/rooms" replace />} />
+      {/* Default fallback - redirect based on auth status */}
+      <Route path="/" element={<Navigate to="/rooms" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }

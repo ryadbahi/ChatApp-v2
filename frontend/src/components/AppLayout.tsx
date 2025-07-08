@@ -1,5 +1,5 @@
 import { useNavigate, Link } from "react-router-dom";
-import { FaPlus, FaSearch, FaLock } from "react-icons/fa";
+import { FaPlus, FaSearch, FaLock, FaUserFriends } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import { useRoom } from "../context/RoomContext";
@@ -10,6 +10,11 @@ import RoomSearch from "./RoomSearch";
 import CreateRoomForm from "./CreateRoomForm";
 import JoinSecretRoom from "./JoinSecretRoom";
 import Profile from "../pages/Profile";
+import FriendsList from "./FriendsList";
+import NotificationsMenu from "./NotificationsMenu";
+import DMThreadsMenu from "./DMThreadsMenu";
+import DMWindow from "./DMWindow";
+import type { User } from "../types/types";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -47,6 +52,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const [showJoinSecret, setShowJoinSecret] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showFriendsList, setShowFriendsList] = useState(false);
+  const [dmUser, setDmUser] = useState<User | null>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const searchModalRef = useRef<HTMLDivElement>(null);
   const createModalRef = useRef<HTMLDivElement>(null);
@@ -84,6 +91,35 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     await logout();
   };
 
+  const handleOpenDM = (otherUser: User) => {
+    setDmUser(otherUser);
+  };
+
+  const handleCloseDM = () => {
+    setDmUser(null);
+  };
+
+  // Listen for custom events to open DM windows
+  useEffect(() => {
+    const handleOpenDirectMessage = (event: CustomEvent) => {
+      const { userId } = event.detail;
+      // We would need to fetch the user data or pass it differently
+      // For now, we'll just log it
+      console.log("Opening DM for user:", userId);
+    };
+
+    window.addEventListener(
+      "openDirectMessage",
+      handleOpenDirectMessage as EventListener
+    );
+    return () => {
+      window.removeEventListener(
+        "openDirectMessage",
+        handleOpenDirectMessage as EventListener
+      );
+    };
+  }, []);
+
   return (
     <div className="h-screen w-full flex flex-col bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 overflow-hidden relative">
       {/* Navbar */}
@@ -107,6 +143,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 setShowSearch((prev) => !prev);
                 setShowCreate(false);
                 setShowProfileMenu(false);
+                setShowFriendsList(false);
               }}
             />
 
@@ -119,6 +156,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                   setShowCreate((prev) => !prev);
                   setShowSearch(false);
                   setShowProfileMenu(false);
+                  setShowFriendsList(false);
                 }}
               />
             )}
@@ -132,8 +170,36 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 setShowSearch(false);
                 setShowCreate(false);
                 setShowProfileMenu(false);
+                setShowFriendsList(false);
               }}
             />
+
+            {/* Friends */}
+            <NavbarButton
+              icon={FaUserFriends}
+              label="Friends"
+              onClick={() => {
+                setShowFriendsList((prev) => !prev);
+                setShowSearch(false);
+                setShowCreate(false);
+                setShowProfileMenu(false);
+              }}
+            />
+
+            {/* Direct Messages */}
+            {user && (
+              <DMThreadsMenu
+                currentUser={{
+                  _id: user.id,
+                  username: user.username,
+                  avatar: user.avatar,
+                }}
+                onOpenDM={handleOpenDM}
+              />
+            )}
+
+            {/* Notifications */}
+            <NotificationsMenu />
 
             <div className="h-8 w-px bg-white/20 mx-1 md:mx-2"></div>
 
@@ -331,6 +397,27 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <div className="flex-1 h-full overflow-y-auto relative z-10 p-4">
         {children}
       </div>
+
+      {/* Friends List Modal */}
+      <FriendsList
+        isOpen={showFriendsList}
+        onClose={() => setShowFriendsList(false)}
+        onOpenDM={handleOpenDM}
+      />
+
+      {/* DM Window */}
+      {dmUser && user && (
+        <DMWindow
+          otherUser={dmUser}
+          currentUser={{
+            _id: user.id,
+            username: user.username,
+            avatar: user.avatar,
+          }}
+          onClose={handleCloseDM}
+          isVisible={!!dmUser}
+        />
+      )}
     </div>
   );
 };

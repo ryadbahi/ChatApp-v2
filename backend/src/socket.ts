@@ -5,6 +5,9 @@ import Message from "./models/Message";
 import Room from "./models/Room";
 import User from "./models/User";
 import DirectMessage from "./models/DirectMessage";
+import FriendRequest from "./models/FriendRequest";
+import Friendship from "./models/Friendship";
+import Notification from "./models/Notification";
 import { Types } from "mongoose";
 
 interface RoomData {
@@ -19,10 +22,12 @@ const rooms: Record<string, RoomData> = {};
 const socketToUser: Record<string, string> = {};
 // Track user's active sockets
 const userSockets: Record<string, Set<string>> = {};
+// Track online users for friends status
+const onlineUsers: Set<string> = new Set();
 
 // Inactivity timeout configuration (in milliseconds)
-const INACTIVITY_TIMEOUT = 1 * 60 * 1000; // 5 seconds for testing
-const WARNING_TIME = 30 * 1000; // 2 seconds warning before disconnect
+const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 5 seconds for testing
+const WARNING_TIME = 30 * 60 * 1000; // 2 seconds warning before disconnect
 // Track user activity timestamps
 const userActivity: Record<string, number> = {};
 // Track warning timers
@@ -74,70 +79,70 @@ const updateUserActivity = (
   io: Server,
   action: string = "unknown"
 ) => {
-  console.log(
-    `[DEBUG] 🚀 updateUserActivity CALLED for ${userId} with action: ${action}`
-  );
-  console.log(
-    `[Inactivity] User ${userId} activity: ${action} at ${new Date().toISOString()}`
-  );
+  // // console.log(
+  // //   `[DEBUG] 🚀 updateUserActivity CALLED for ${userId} with action: ${action}`
+  // );
+  // console.log(
+  //   `[Inactivity] User ${userId} activity: ${action} at ${new Date().toISOString()}`
+  // );
   userActivity[userId] = Date.now();
 
   // Clear existing timers
   if (warningTimers[userId]) {
-    console.log(
-      `[Inactivity] Clearing existing warning timer for user ${userId}`
-    );
+    // console.log(
+    //   `[Inactivity] Clearing existing warning timer for user ${userId}`
+    // );
     clearTimeout(warningTimers[userId]);
     delete warningTimers[userId];
   }
   if (disconnectTimers[userId]) {
-    console.log(
-      `[Inactivity] Clearing existing disconnect timer for user ${userId}`
-    );
+    // console.log(
+    //   `[Inactivity] Clearing existing disconnect timer for user ${userId}`
+    // );
     clearTimeout(disconnectTimers[userId]);
     delete disconnectTimers[userId];
   }
 
   // Set warning timer (warn before disconnect)
-  console.log(
-    `[Inactivity] Setting warning timer for user ${userId} - will warn in ${
-      (INACTIVITY_TIMEOUT - WARNING_TIME) / 1000
-    }s`
-  );
+  // console.log(
+  //   `[Inactivity] Setting warning timer for user ${userId} - will warn in ${
+  //     (INACTIVITY_TIMEOUT - WARNING_TIME) / 1000
+  //   }s`
+  // );
   warningTimers[userId] = setTimeout(() => {
-    console.log(`[Inactivity] ⚠️  WARNING TIMER FIRED for user ${userId}`);
+    //console.log(`[Inactivity] ⚠️  WARNING TIMER FIRED for user ${userId}`);
     const userSocketIds = Array.from(userSockets[userId] || []);
-    console.log(
-      `[Inactivity] Sending warning to user ${userId}, sockets: ${userSocketIds.length}`
-    );
+    // console.log(
+    //   `[Inactivity] Sending warning to user ${userId}, sockets: ${userSocketIds.length}`
+    // );
     userSocketIds.forEach((socketId) => {
       io.to(socketId).emit("inactivityWarning", {
         message: "You will be disconnected due to inactivity",
         timeLeft: WARNING_TIME,
       });
     });
-    console.log(`[Socket] Inactivity warning sent to user: ${userId}`);
+    // console.log(`[Socket] Inactivity warning sent to user: ${userId}`);
   }, INACTIVITY_TIMEOUT - WARNING_TIME);
 
   // Set disconnect timer
-  console.log(
-    `[Inactivity] Setting disconnect timer for user ${userId} - will disconnect in ${
-      INACTIVITY_TIMEOUT / 1000
-    }s`
-  );
+  // console.log(
+  //   `[Inactivity] Setting disconnect timer for user ${userId} - will disconnect in ${
+  //     INACTIVITY_TIMEOUT / 1000
+  //   }s`
+  // );
   disconnectTimers[userId] = setTimeout(() => {
-    console.log(`[Inactivity] 🔥 DISCONNECT TIMER FIRED for user ${userId}`);
+    //console.log(`[Inactivity] 🔥 DISCONNECT TIMER FIRED for user ${userId}`);
     const userSocketIds = Array.from(userSockets[userId] || []);
-    console.log(
-      `[Inactivity] Forcibly disconnecting user ${userId}, sockets: ${userSocketIds.length}`
-    );
+    // console.log(
+    //   `[Inactivity] Forcibly disconnecting user ${userId}, sockets: ${userSocketIds.length}`
+    // );
     userSocketIds.forEach((socketId) => {
       io.to(socketId).emit("inactivityDisconnect", {
         message: "Disconnected due to inactivity",
       });
       io.sockets.sockets.get(socketId)?.disconnect(true);
     });
-    console.log(`[Socket] User disconnected due to inactivity: ${userId}`);
+    // console.log(`[Socket] User disconnected due to inactivity: ${userId}`);
 
     // Clean up
     delete userActivity[userId];
@@ -158,29 +163,79 @@ const cleanupUserTimers = (userId: string) => {
   delete userActivity[userId];
 };
 
+// Helper function to get user's friends
+const getUserFriends = async (userId: string): Promise<string[]> => {
+  try {
+    const friendships = await Friendship.find({
+      $or: [{ user1: userId }, { user2: userId }],
+    });
+
+    return friendships.map((friendship) => {
+      return friendship.user1.toString() === userId
+        ? friendship.user2.toString()
+        : friendship.user1.toString();
+    });
+  } catch (error) {
+    console.error("Error getting user friends:", error);
+    return [];
+  }
+};
+
+// Helper function to broadcast to user's friends
+const broadcastToFriends = async (
+  io: Server,
+  userId: string,
+  event: string,
+  data: any
+) => {
+  try {
+    const friends = await getUserFriends(userId);
+    friends.forEach((friendId) => {
+      const friendSockets = Array.from(userSockets[friendId] || []);
+      friendSockets.forEach((socketId) => {
+        io.to(socketId).emit(event, data);
+      });
+    });
+  } catch (error) {
+    console.error("Error broadcasting to friends:", error);
+  }
+};
+
+// Helper function to send notification
+const sendNotificationToUser = (
+  io: Server,
+  userId: string,
+  notification: any
+) => {
+  const userSocketList = Array.from(userSockets[userId] || []);
+  userSocketList.forEach((socketId) => {
+    io.to(socketId).emit("newNotification", notification);
+  });
+};
+
 export const setupSocket = (io: Server) => {
   // Add periodic debugging to check timer status
-  setInterval(() => {
-    console.log(`[DEBUG] Timer Status Check:`, {
-      activeUsers: Object.keys(userSockets).length,
-      warningTimers: Object.keys(warningTimers).length,
-      disconnectTimers: Object.keys(disconnectTimers).length,
-      userActivity: Object.keys(userActivity).length,
-    });
+  // setInterval(() => {
+  //   console.log(`[DEBUG] Timer Status Check:`, {
+  //     activeUsers: Object.keys(userSockets).length,
+  //     warningTimers: Object.keys(warningTimers).length,
+  //     disconnectTimers: Object.keys(disconnectTimers).length,
+  //     userActivity: Object.keys(userActivity).length,
+  //   });
 
-    // Show remaining time for each user
-    Object.keys(userActivity).forEach((userId) => {
-      const lastActivity = userActivity[userId];
-      const timeSinceActivity = Date.now() - lastActivity;
-      const timeUntilWarning =
-        INACTIVITY_TIMEOUT - WARNING_TIME - timeSinceActivity;
-      const timeUntilDisconnect = INACTIVITY_TIMEOUT - timeSinceActivity;
+  //   // Show remaining time for each user
+  //   Object.keys(userActivity).forEach((userId) => {
+  //     const lastActivity = userActivity[userId];
+  //     const timeSinceActivity = Date.now() - lastActivity;
+  //     const timeUntilWarning =
+  //       INACTIVITY_TIMEOUT - WARNING_TIME - timeSinceActivity;
+  //     const timeUntilDisconnect = INACTIVITY_TIMEOUT - timeSinceActivity;
 
-      console.log(
-        `[DEBUG] User ${userId}: ${timeSinceActivity}ms since activity, ${timeUntilWarning}ms until warning, ${timeUntilDisconnect}ms until disconnect`
-      );
-    });
-  }, 5000); // Every 5 seconds
+  //     console.log(
+  //    //  `[DEBUG] User ${userId}: ${timeSinceActivity}ms since activity, ${timeUntilWarning}ms until warning, ${timeUntilDisconnect}ms until disconnect`
+  //     );
+  //   });
+  // }, 5000); // Every 5 seconds
 
   io.use((socket, next) => {
     const rawCookie = socket.handshake.headers.cookie || "";
@@ -209,34 +264,388 @@ export const setupSocket = (io: Server) => {
   });
 
   io.on("connection", (socket) => {
-    console.log(`[DEBUG] ✅ CONNECTION HANDLER CALLED for socket ${socket.id}`);
+    console.log(`[Socket] User connected: ${socket.id}`);
     const userId = socketToUser[socket.id];
     if (!userId) {
       console.log(`[Socket] ERROR: No userId found for socket ${socket.id}`);
       return;
     }
-    console.log(`[DEBUG] ✅ USER ID FOUND: ${userId}`);
-    console.log(`[Socket] User connected: ${userId}, socket: ${socket.id}`);
-    console.log(`[Socket] Current active users:`, Object.keys(userSockets));
-    console.log(`[Socket] Current timers before connection:`, {
-      warnings: Object.keys(warningTimers),
-      disconnects: Object.keys(disconnectTimers),
-    });
+
+    console.log(`[Socket] User ${userId} connected with socket ${socket.id}`);
+
+    // Join user-specific room for targeted notifications
+    socket.join(`user:${userId}`);
+    console.log(`[Socket] User ${userId} joined room: user:${userId}`);
 
     // Initialize user activity tracking - this starts the inactivity timer
-    console.log(`[DEBUG] 🎯 ABOUT TO CALL updateUserActivity for ${userId}`);
     updateUserActivity(userId, io, "connection");
-    console.log(`[DEBUG] 🎯 FINISHED CALLING updateUserActivity for ${userId}`);
-
-    console.log(`[Socket] Timers after setting for user ${userId}:`, {
-      warnings: Object.keys(warningTimers),
-      disconnects: Object.keys(disconnectTimers),
-    });
 
     // Send initial room counts to the newly connected user
     getAllRoomCounts().then((counts) => {
-      console.log(`[Socket] Sending initial room counts to ${userId}`);
+      console.log(`[Socket] Sending initial room counts to user ${userId}`);
       socket.emit("allRoomCounts", counts);
+    });
+
+    // Add user to online users set and broadcast status to friends
+    onlineUsers.add(userId);
+    broadcastToFriends(io, userId, "friendOnlineStatusUpdate", {
+      userId,
+      isOnline: true,
+    });
+
+    // Friend system event handlers
+    socket.on("sendFriendRequest", async ({ recipientId }) => {
+      updateUserActivity(userId, io, "sendFriendRequest");
+      try {
+        if (!recipientId || recipientId === userId) return;
+
+        // Check if request already exists
+        const existingRequest = await FriendRequest.findOne({
+          $or: [
+            { sender: userId, recipient: recipientId },
+            { sender: recipientId, recipient: userId },
+          ],
+        });
+
+        if (existingRequest) {
+          socket.emit("friendRequestError", {
+            message: "Friend request already exists",
+          });
+          return;
+        }
+
+        // Check if already friends
+        const existingFriendship = await Friendship.findOne({
+          $or: [
+            { user1: userId, user2: recipientId },
+            { user1: recipientId, user2: userId },
+          ],
+        });
+
+        if (existingFriendship) {
+          socket.emit("friendRequestError", { message: "Already friends" });
+          return;
+        }
+
+        // Create friend request
+        const friendRequest = await FriendRequest.create({
+          sender: userId,
+          recipient: recipientId,
+        });
+
+        const populated = await friendRequest.populate([
+          { path: "sender", select: "username avatar" },
+          { path: "recipient", select: "username avatar" },
+        ]);
+
+        // Create notification for recipient
+        const notification = await Notification.create({
+          recipient: recipientId,
+          type: "friend_request",
+          title: "New Friend Request",
+          message: `${
+            (populated.sender as any).username
+          } sent you a friend request`,
+          data: {
+            friendRequestId: friendRequest._id,
+            requesterId: userId,
+            requesterUsername: (populated.sender as any).username,
+            requesterAvatar: (populated.sender as any).avatar,
+          },
+        });
+
+        // Send real-time updates
+        const recipientSockets = Array.from(userSockets[recipientId] || []);
+        recipientSockets.forEach((socketId) => {
+          io.to(socketId).emit("newFriendRequest", populated);
+        });
+
+        // Send notification
+        sendNotificationToUser(io, recipientId, notification);
+
+        // Confirm to sender
+        socket.emit("friendRequestSent", { recipientId });
+
+        console.log(
+          `[FriendRequest] Request sent from ${userId} to ${recipientId}`
+        );
+      } catch (error) {
+        console.error("[Socket] Error in sendFriendRequest:", error);
+        socket.emit("friendRequestError", {
+          message: "Failed to send friend request",
+        });
+      }
+    });
+
+    socket.on("acceptFriendRequest", async ({ requestId }) => {
+      updateUserActivity(userId, io, "acceptFriendRequest");
+      try {
+        if (!requestId) return;
+
+        const friendRequest = await FriendRequest.findById(requestId).populate([
+          { path: "sender", select: "username avatar" },
+          { path: "recipient", select: "username avatar" },
+        ]);
+
+        if (
+          !friendRequest ||
+          (friendRequest.recipient as any)._id.toString() !== userId
+        ) {
+          socket.emit("friendRequestError", {
+            message: "Invalid friend request",
+          });
+          return;
+        }
+
+        if (friendRequest.status !== "pending") {
+          socket.emit("friendRequestError", {
+            message: "Friend request already processed",
+          });
+          return;
+        }
+
+        // Update request status
+        friendRequest.status = "accepted";
+        await friendRequest.save();
+
+        // Create friendship
+        const friendship = await Friendship.create({
+          user1: (friendRequest.sender as any)._id,
+          user2: (friendRequest.recipient as any)._id,
+        });
+
+        // Create notification for requester
+        const notification = await Notification.create({
+          recipient: (friendRequest.sender as any)._id,
+          type: "friend_accepted",
+          title: "Friend Request Accepted",
+          message: `${
+            (friendRequest.recipient as any).username
+          } accepted your friend request`,
+          data: {
+            friendshipId: friendship._id,
+            friendId: userId,
+            friendUsername: (friendRequest.recipient as any).username,
+            friendAvatar: (friendRequest.recipient as any).avatar,
+          },
+        });
+
+        // Send real-time updates
+        const requesterSockets = Array.from(
+          userSockets[(friendRequest.sender as any)._id.toString()] || []
+        );
+        const recipientSockets = Array.from(userSockets[userId] || []);
+
+        [...requesterSockets, ...recipientSockets].forEach((socketId) => {
+          io.to(socketId).emit("friendRequestAccepted", {
+            requestId,
+            friendship,
+            requester: friendRequest.sender,
+            recipient: friendRequest.recipient,
+          });
+        });
+
+        // Send notification to requester
+        sendNotificationToUser(
+          io,
+          (friendRequest.sender as any)._id.toString(),
+          notification
+        );
+
+        console.log(
+          `[FriendRequest] Request ${requestId} accepted by ${userId}`
+        );
+      } catch (error) {
+        console.error("[Socket] Error in acceptFriendRequest:", error);
+        socket.emit("friendRequestError", {
+          message: "Failed to accept friend request",
+        });
+      }
+    });
+
+    socket.on("rejectFriendRequest", async ({ requestId }) => {
+      updateUserActivity(userId, io, "rejectFriendRequest");
+      try {
+        if (!requestId) return;
+
+        const friendRequest = await FriendRequest.findById(requestId).populate([
+          { path: "sender", select: "username avatar" },
+          { path: "recipient", select: "username avatar" },
+        ]);
+
+        if (
+          !friendRequest ||
+          (friendRequest.recipient as any)._id.toString() !== userId
+        ) {
+          socket.emit("friendRequestError", {
+            message: "Invalid friend request",
+          });
+          return;
+        }
+
+        if (friendRequest.status !== "pending") {
+          socket.emit("friendRequestError", {
+            message: "Friend request already processed",
+          });
+          return;
+        }
+
+        // Update request status
+        friendRequest.status = "rejected";
+        await friendRequest.save();
+
+        // Send real-time updates
+        const requesterSockets = Array.from(
+          userSockets[(friendRequest.sender as any)._id.toString()] || []
+        );
+        const recipientSockets = Array.from(userSockets[userId] || []);
+
+        [...requesterSockets, ...recipientSockets].forEach((socketId) => {
+          io.to(socketId).emit("friendRequestRejected", {
+            requestId,
+            requester: friendRequest.sender,
+            recipient: friendRequest.recipient,
+          });
+        });
+
+        console.log(
+          `[FriendRequest] Request ${requestId} rejected by ${userId}`
+        );
+      } catch (error) {
+        console.error("[Socket] Error in rejectFriendRequest:", error);
+        socket.emit("friendRequestError", {
+          message: "Failed to reject friend request",
+        });
+      }
+    });
+
+    socket.on("endFriendship", async ({ friendshipId, friendId }) => {
+      updateUserActivity(userId, io, "endFriendship");
+      try {
+        if (!friendshipId || !friendId) return;
+
+        const friendship = await Friendship.findById(friendshipId);
+        if (!friendship) {
+          socket.emit("friendshipError", { message: "Friendship not found" });
+          return;
+        }
+
+        // Verify user is part of this friendship
+        const isParticipant =
+          friendship.user1.toString() === userId ||
+          friendship.user2.toString() === userId;
+        if (!isParticipant) {
+          socket.emit("friendshipError", {
+            message: "Not authorized to end this friendship",
+          });
+          return;
+        }
+
+        // Delete the friendship
+        await Friendship.findByIdAndDelete(friendshipId);
+
+        // Send real-time updates to both users
+        const user1Sockets = Array.from(
+          userSockets[friendship.user1.toString()] || []
+        );
+        const user2Sockets = Array.from(
+          userSockets[friendship.user2.toString()] || []
+        );
+
+        [...user1Sockets, ...user2Sockets].forEach((socketId) => {
+          io.to(socketId).emit("friendshipEnded", {
+            friendshipId,
+            endedBy: userId,
+          });
+        });
+
+        console.log(
+          `[Friendship] Friendship ${friendshipId} ended by ${userId}`
+        );
+      } catch (error) {
+        console.error("[Socket] Error in endFriendship:", error);
+        socket.emit("friendshipError", { message: "Failed to end friendship" });
+      }
+    });
+
+    // Notification event handlers
+    socket.on("markNotificationAsRead", async ({ notificationId }) => {
+      try {
+        if (!notificationId) return;
+
+        const notification = await Notification.findById(notificationId);
+        if (
+          !notification ||
+          (notification.recipient as any).toString() !== userId
+        ) {
+          return;
+        }
+
+        notification.read = true;
+        await notification.save();
+
+        socket.emit("notificationMarkedAsRead", { notificationId });
+        console.log(
+          `[Notification] Marked as read: ${notificationId} by ${userId}`
+        );
+      } catch (error) {
+        console.error("[Socket] Error in markNotificationAsRead:", error);
+      }
+    });
+
+    socket.on("markAllNotificationsAsRead", async () => {
+      try {
+        await Notification.updateMany(
+          { recipient: userId, read: false },
+          { read: true }
+        );
+
+        socket.emit("allNotificationsMarkedAsRead");
+        console.log(
+          `[Notification] All notifications marked as read by ${userId}`
+        );
+      } catch (error) {
+        console.error("[Socket] Error in markAllNotificationsAsRead:", error);
+      }
+    });
+
+    socket.on("deleteNotification", async ({ notificationId }) => {
+      try {
+        if (!notificationId) return;
+
+        const notification = await Notification.findById(notificationId);
+        if (
+          !notification ||
+          (notification.recipient as any).toString() !== userId
+        ) {
+          return;
+        }
+
+        await Notification.findByIdAndDelete(notificationId);
+        socket.emit("notificationDeleted", { notificationId });
+        console.log(`[Notification] Deleted: ${notificationId} by ${userId}`);
+      } catch (error) {
+        console.error("[Socket] Error in deleteNotification:", error);
+      }
+    });
+
+    // Get online friends status
+    socket.on("getOnlineFriends", async (callback) => {
+      try {
+        const friends = await getUserFriends(userId);
+        const onlineFriends = friends.filter((friendId) =>
+          onlineUsers.has(friendId)
+        );
+
+        const onlineFriendsData = await User.find({
+          _id: { $in: onlineFriends },
+        }).select("_id username avatar");
+
+        callback({ onlineFriends: onlineFriendsData });
+      } catch (error) {
+        console.error("[Socket] Error in getOnlineFriends:", error);
+        callback({ onlineFriends: [] });
+      }
     });
 
     socket.on("joinRoom", async (roomId: string) => {
@@ -366,6 +775,12 @@ export const setupSocket = (io: Server) => {
         // Clean up user timers if this is the last socket for this user
         if (userSockets[userId] && userSockets[userId].size === 1) {
           cleanupUserTimers(userId);
+          // Remove from online users and notify friends
+          onlineUsers.delete(userId);
+          broadcastToFriends(io, userId, "friendOnlineStatusUpdate", {
+            userId,
+            isOnline: false,
+          });
         }
 
         // Clean up user sockets tracking
@@ -446,9 +861,24 @@ export const setupSocket = (io: Server) => {
         try {
           if ((!message?.trim() && !imageUrl) || !recipientId) return;
 
-          // Verify recipient exists
+          // Verify recipient exists and is a friend
           const recipient = await User.findById(recipientId);
           if (!recipient) return;
+
+          // Check if users are friends
+          const friendship = await Friendship.findOne({
+            $or: [
+              { user1: userId, user2: recipientId },
+              { user1: recipientId, user2: userId },
+            ],
+          });
+
+          if (!friendship) {
+            socket.emit("directMessageError", {
+              message: "Can only send direct messages to friends",
+            });
+            return;
+          }
 
           // Create direct message
           const dm = await DirectMessage.create({
@@ -479,36 +909,5 @@ export const setupSocket = (io: Server) => {
         }
       }
     );
-
-    // Handle direct message read receipts
-    socket.on("markDirectMessageAsRead", async ({ otherUserId }) => {
-      try {
-        if (!otherUserId) return;
-
-        // Mark messages as read
-        await DirectMessage.updateMany(
-          {
-            sender: otherUserId,
-            recipient: userId,
-            readAt: null,
-          },
-          {
-            readAt: new Date(),
-          }
-        );
-
-        // Notify the sender that their messages were read
-        const otherUserSockets = Array.from(userSockets[otherUserId] || []);
-        otherUserSockets.forEach((socketId) => {
-          io.to(socketId).emit("directMessagesRead", { readByUserId: userId });
-        });
-
-        console.log(
-          `[DirectMessage] Messages marked as read by ${userId} from ${otherUserId}`
-        );
-      } catch (error) {
-        console.error("[Socket] Error in markDirectMessageAsRead:", error);
-      }
-    });
   });
 };

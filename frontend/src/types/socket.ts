@@ -1,4 +1,4 @@
-import type { User } from "./types";
+import type { User, FriendRequest, Friendship, Notification } from "./types";
 
 export interface DirectMessage {
   _id: string;
@@ -29,6 +29,36 @@ export interface ServerToClientEvents {
   error: (data: { message: string }) => void;
   newDirectMessage: (message: DirectMessage) => void;
   directMessagesRead: (data: { readByUserId: string }) => void;
+  directMessageError: (data: { message: string }) => void;
+
+  // Friends system events
+  newFriendRequest: (request: FriendRequest) => void;
+  friendRequestSent: (data: { recipientId: string }) => void;
+  friendRequestError: (data: { message: string }) => void;
+  friendRequestAccepted: (data: {
+    requestId: string;
+    friendship: Friendship;
+    requester: User;
+    recipient: User;
+  }) => void;
+  friendRequestRejected: (data: {
+    requestId: string;
+    requester: User;
+    recipient: User;
+  }) => void;
+  friendshipCreated: (data: { friendship: Friendship }) => void;
+  friendshipEnded: (data: { friendshipId: string; endedBy: string }) => void;
+  friendshipError: (data: { message: string }) => void;
+  friendOnlineStatusUpdate: (data: {
+    userId: string;
+    isOnline: boolean;
+  }) => void;
+
+  // Notifications events
+  newNotification: (notification: Notification) => void;
+  notificationMarkedAsRead: (data: { notificationId: string }) => void;
+  allNotificationsMarkedAsRead: () => void;
+  notificationDeleted: (data: { notificationId: string }) => void;
 }
 
 export interface ClientToServerEvents {
@@ -53,4 +83,18 @@ export interface ClientToServerEvents {
     imageUrl?: string;
   }) => void;
   markDirectMessageAsRead: (payload: { otherUserId: string }) => void;
+
+  // Friends system events
+  sendFriendRequest: (payload: { recipientId: string }) => void;
+  acceptFriendRequest: (payload: { requestId: string }) => void;
+  rejectFriendRequest: (payload: { requestId: string }) => void;
+  endFriendship: (payload: { friendshipId: string; friendId: string }) => void;
+  getOnlineFriends: (
+    callback: (data: { onlineFriends: User[] }) => void
+  ) => void;
+
+  // Notifications events
+  markNotificationAsRead: (payload: { notificationId: string }) => void;
+  markAllNotificationsAsRead: () => void;
+  deleteNotification: (payload: { notificationId: string }) => void;
 }

@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
 import { socket } from "../socket";
 import { useAuth } from "../context/AuthContext";
+import UserActionDropdown from "./UserActionDropdown";
 // Use the User type from AuthContext for current user, and types.ts for room users
 import type { User as RoomUser } from "../types/types";
 
 interface RoomUsersListProps {
   roomId: string;
+  onOpenDM?: (userId: string) => void;
 }
 
-const RoomUsersList: React.FC<RoomUsersListProps> = ({ roomId }) => {
+const RoomUsersList: React.FC<RoomUsersListProps> = ({ roomId, onOpenDM }) => {
   const { user } = useAuth();
   const [users, setUsers] = useState<RoomUser[]>([]);
+  const [selectedUser, setSelectedUser] = useState<RoomUser | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     socket.emit("joinRoom", roomId);
@@ -40,6 +44,23 @@ const RoomUsersList: React.FC<RoomUsersListProps> = ({ roomId }) => {
     return a.username.localeCompare(b.username);
   });
 
+  const handleUserClick = (clickedUser: RoomUser, event: React.MouseEvent) => {
+    // Don't show dropdown for current user
+    if (clickedUser._id === user?.id) return;
+
+    event.stopPropagation();
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    setDropdownPosition({
+      x: rect.left + rect.width / 2,
+      y: rect.bottom + 5,
+    });
+    setSelectedUser(clickedUser);
+  };
+
+  const handleCloseDropdown = () => {
+    setSelectedUser(null);
+  };
+
   return (
     <div className="flex-1 min-h-[26vh] h-full overflow-y-auto p-4 space-y-2 mb-4 bg-white/20 rounded-2xl border border-white/30 shadow-2xl backdrop-blur-3xl">
       <h3 className="text-lg font-semibold text-white mb-2">Connected Users</h3>
@@ -47,8 +68,11 @@ const RoomUsersList: React.FC<RoomUsersListProps> = ({ roomId }) => {
         {sortedUsers.map((u: RoomUser) => (
           <li
             key={u._id}
-            className={`flex items-center gap-2 ${
-              u._id === user?.id ? "font-bold text-blue-300" : "text-white/90"
+            onClick={(e) => handleUserClick(u, e)}
+            className={`flex items-center gap-2 cursor-pointer p-2 rounded-lg transition-colors ${
+              u._id === user?.id
+                ? "font-bold text-blue-300"
+                : "text-white/90 hover:bg-white/10"
             }`}
           >
             {u.avatar ? (
@@ -67,6 +91,17 @@ const RoomUsersList: React.FC<RoomUsersListProps> = ({ roomId }) => {
           </li>
         ))}
       </ul>
+
+      {/* User Action Dropdown */}
+      {selectedUser && (
+        <UserActionDropdown
+          user={selectedUser}
+          isOpen={!!selectedUser}
+          onClose={handleCloseDropdown}
+          position={dropdownPosition}
+          onOpenDM={onOpenDM}
+        />
+      )}
     </div>
   );
 };

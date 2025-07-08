@@ -13,6 +13,9 @@ import messageRoutes from "./routes/message.route";
 import { errorHandler } from "./middlewares/errorHandler";
 import { setupSocket } from "./socket"; // 👈 socket logic separated
 
+// Global socket instance for use in controllers
+export let globalSocketIO: Server;
+
 dotenv.config();
 
 const app = express();
@@ -23,6 +26,9 @@ const io = new Server(server, {
     credentials: true,
   },
 });
+
+// Make socket instance globally available BEFORE setup
+globalSocketIO = io;
 
 // 🧠 Setup socket logic (auth, events, etc.)
 setupSocket(io);
@@ -37,7 +43,15 @@ app.use("/api/auth", authRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/messages", messageRoutes);
 
-// Direct message routes
+// Friends routes
+import friendsRoutes from "./routes/friends.route";
+app.use("/api/friends", friendsRoutes);
+
+// Notifications routes
+import notificationsRoutes from "./routes/notifications.route";
+app.use("/api/notifications", notificationsRoutes);
+
+// Direct Messages routes
 import directMessageRoutes from "./routes/directMessage.route";
 app.use("/api/direct-messages", directMessageRoutes);
 

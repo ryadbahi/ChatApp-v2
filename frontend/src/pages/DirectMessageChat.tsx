@@ -1,12 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { socket } from "../socket";
-import {
-  getDirectMessages,
-  markMessagesAsRead,
-  type DirectMessage,
-  type User,
-} from "../api/directMessages";
+import { getDirectMessages, markMessagesAsRead } from "../api/directMessages";
+import type { DirectMessage, User } from "../types/types";
 import Toast from "../components/Toast";
 import { FiArrowLeft } from "react-icons/fi";
 import MessageBubble from "../components/MessageBubble";
@@ -45,13 +41,30 @@ const DirectMessageChat: React.FC = () => {
     const fetchMessages = async () => {
       try {
         const response = await getDirectMessages(otherUserId);
-        setMessages(response.data.messages);
-        setOtherUser(response.data.otherUser);
+        if (response.success && response.data) {
+          if (Array.isArray(response.data.messages)) {
+            setMessages(response.data.messages);
+          } else {
+            setMessages([]); // Ensure it's always an array
+          }
+          // Get other user info from the first message if available
+          if (response.data.messages && response.data.messages.length > 0) {
+            const firstMessage = response.data.messages[0];
+            const otherUserFromMessage =
+              firstMessage.sender._id === currentUser?.id
+                ? firstMessage.recipient
+                : firstMessage.sender;
+            setOtherUser(otherUserFromMessage);
+          }
+        } else {
+          setMessages([]);
+        }
 
         // Mark messages as read
         await markMessagesAsRead(otherUserId);
       } catch (error) {
         console.error("Error fetching direct messages:", error);
+        setMessages([]); // Ensure it's always an array on error
         showToast("Failed to load messages", "error");
       } finally {
         setLoading(false);
@@ -59,7 +72,7 @@ const DirectMessageChat: React.FC = () => {
     };
 
     fetchMessages();
-  }, [otherUserId]);
+  }, [otherUserId, currentUser?.id]);
 
   useEffect(() => {
     const handleNewDirectMessage = (message: DirectMessage) => {

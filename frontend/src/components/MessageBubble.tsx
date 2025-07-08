@@ -1,14 +1,19 @@
 import React, { useState, useRef, useEffect } from "react";
 import clsx from "clsx";
-import type { Message } from "../types/types";
+import type { Message, User } from "../types/types";
 import { FaClock, FaUser } from "react-icons/fa";
 
 interface MessageBubbleProps {
   msg: Message;
   isMe: boolean;
+  onUserClick?: (user: User, event: React.MouseEvent) => void;
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ msg, isMe }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({
+  msg,
+  isMe,
+  onUserClick,
+}) => {
   const [showTime, setShowTime] = useState(false);
   const usernameRef = useRef<HTMLSpanElement>(null);
   const [usernameWidth, setUsernameWidth] = useState<number>(0);
@@ -107,11 +112,22 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ msg, isMe }) => {
           {/* Enhanced username badge */}
           <div
             className={clsx(
-              "absolute z-10 pointer-events-none select-none",
+              "absolute z-10 select-none",
               isMe ? "right-4" : "left-4",
-              "transform -translate-y-1/2 transition-all duration-300 group-hover:scale-105"
+              "transform -translate-y-1/2 transition-all duration-300 group-hover:scale-105",
+              onUserClick
+                ? "pointer-events-auto cursor-pointer"
+                : "pointer-events-none"
             )}
             style={{ top: 0 }}
+            onClick={
+              onUserClick
+                ? (e) => {
+                    e.stopPropagation();
+                    onUserClick(msg.sender, e);
+                  }
+                : undefined
+            }
           >
             <div
               className={clsx(
@@ -119,7 +135,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ msg, isMe }) => {
                 isMe
                   ? "bg-gradient-to-r from-pink-500/70 to-purple-600/70"
                   : "bg-gradient-to-r from-indigo-500/70 to-blue-600/70",
-                "backdrop-blur-md border border-white/10 shadow-lg"
+                "backdrop-blur-md border border-white/10 shadow-lg",
+                onUserClick ? "hover:scale-105 transition-transform" : ""
               )}
             >
               <span

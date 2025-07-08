@@ -1,60 +1,79 @@
 import axios from "./axios";
+import type { DirectMessage, DMThread } from "../types/types";
 
-export interface DirectMessage {
-  _id: string;
-  sender: {
-    _id: string;
-    username: string;
-    avatar?: string;
-  };
-  recipient: {
-    _id: string;
-    username: string;
-    avatar?: string;
-  };
-  content: string;
-  imageUrl?: string;
-  createdAt: string;
-  updatedAt: string;
-  readAt?: string;
+export interface DirectMessageApiResponse {
+  success: boolean;
+  message?: string;
+  data?: any;
 }
 
-export interface DirectMessageContact {
-  _id: string;
-  username: string;
-  avatar?: string;
-  lastMessage: DirectMessage;
-  unreadCount: number;
+export interface DirectMessagesResponse extends DirectMessageApiResponse {
+  data?: {
+    messages: DirectMessage[];
+    hasMore: boolean;
+  };
 }
 
-export interface User {
-  _id: string;
-  username: string;
-  avatar?: string;
+export interface DMThreadsResponse extends DirectMessageApiResponse {
+  data?: DMThread[];
 }
 
 // Get direct messages with a specific user
-export const getDirectMessages = async (otherUserId: string) => {
-  const response = await axios.get(`/direct-messages/${otherUserId}`);
+export const getDirectMessages = async (
+  otherUserId: string,
+  page: number = 1,
+  limit: number = 20
+): Promise<DirectMessagesResponse> => {
+  const response = await axios.get(`/api/direct-messages/${otherUserId}`, {
+    params: { page, limit },
+  });
   return response.data;
 };
 
-// Get list of contacts (users with message history)
-export const getDirectMessageContacts = async () => {
-  const response = await axios.get("/direct-messages/contacts");
+// Send a direct message
+export const sendDirectMessage = async (
+  recipientId: string,
+  content: string,
+  imageUrl?: string
+): Promise<DirectMessageApiResponse> => {
+  const response = await axios.post(`/api/direct-messages`, {
+    recipientId,
+    content,
+    imageUrl,
+  });
   return response.data;
 };
 
-// Mark messages as read
-export const markMessagesAsRead = async (otherUserId: string) => {
-  const response = await axios.put(`/direct-messages/${otherUserId}/read`);
+// Get all DM threads for the current user
+export const getDMThreads = async (): Promise<DMThreadsResponse> => {
+  const response = await axios.get("/api/direct-messages/conversations/recent");
   return response.data;
 };
 
-// Search users for direct messaging
-export const searchUsersForDM = async (query: string) => {
-  const response = await axios.get(
-    `/direct-messages/search-users?query=${encodeURIComponent(query)}`
-  );
+// Mark direct messages as read
+export const markDirectMessagesAsRead = async (
+  otherUserId: string
+): Promise<DirectMessageApiResponse> => {
+  const response = await axios.put(`/api/direct-messages/${otherUserId}/read`);
+  return response.data;
+};
+
+// Alias for backward compatibility
+export const markMessagesAsRead = markDirectMessagesAsRead;
+
+// Get contacts (friends) for direct messaging
+export const getDirectMessageContacts =
+  async (): Promise<DirectMessageApiResponse> => {
+    const response = await axios.get("/api/friends");
+    return response.data;
+  };
+
+// Search users for direct messaging (friends only)
+export const searchUsersForDM = async (
+  query: string
+): Promise<DirectMessageApiResponse> => {
+  const response = await axios.get("/api/friends/search", {
+    params: { query },
+  });
   return response.data;
 };
