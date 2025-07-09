@@ -28,7 +28,8 @@ export interface ServerToClientEvents {
   inactivityDisconnect: (data: { message: string }) => void;
   error: (data: { message: string }) => void;
   newDirectMessage: (message: DirectMessage) => void;
-  directMessagesRead: (data: { readByUserId: string }) => void;
+  directMessagesRead: (data: { senderId: string; readAt: string }) => void;
+  allDirectMessagesRead: (data: { readerId: string; readAt: string }) => void;
   directMessageError: (data: { message: string }) => void;
 
   // Friends system events
@@ -67,10 +68,10 @@ export interface ClientToServerEvents {
     message: string;
     imageUrl?: string;
   }) => void;
-  joinRoom: (roomId: string) => void;
-  leaveRoom: (roomId: string) => void;
+  joinRoom: (payload: { roomId: string }) => void;
+  leaveRoom: (payload: { roomId: string }) => void;
   getRoomUsers: (
-    roomId: string,
+    payload: { roomId: string },
     callback: (data: { users: User[] }) => void
   ) => void;
   getPublicRoomsUserCounts: (
@@ -78,11 +79,12 @@ export interface ClientToServerEvents {
   ) => void;
   userActivity: () => void;
   sendDirectMessage: (payload: {
-    recipientId: string;
-    message: string;
+    receiverId: string;
+    content: string;
     imageUrl?: string;
   }) => void;
-  markDirectMessageAsRead: (payload: { otherUserId: string }) => void;
+  markDirectMessageAsRead: (payload: { messageId: string }) => void;
+  markAllDirectMessagesAsRead: (payload: { senderId: string }) => void;
 
   // Friends system events
   sendFriendRequest: (payload: { recipientId: string }) => void;

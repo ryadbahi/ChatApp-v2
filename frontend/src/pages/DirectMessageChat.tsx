@@ -3,10 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { socket } from "../socket";
 import { getDirectMessages, markMessagesAsRead } from "../api/directMessages";
 import type { DirectMessage, User } from "../types/types";
-import Toast from "../components/Toast";
+import { Toast, MessageBubble, RichMessageInput } from "../components";
 import { FiArrowLeft } from "react-icons/fi";
-import MessageBubble from "../components/MessageBubble";
-import RichMessageInput from "../components/RichMessageInput";
 import { useAuth } from "../context/AuthContext";
 
 const DirectMessageChat: React.FC = () => {
@@ -90,23 +88,50 @@ const DirectMessageChat: React.FC = () => {
       }
     };
 
-    const handleDirectMessagesRead = (data: { readByUserId: string }) => {
-      // Update messages to show they've been read
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.recipient._id === data.readByUserId && !msg.readAt
-            ? { ...msg, readAt: new Date().toISOString() }
-            : msg
-        )
-      );
+    const handleDirectMessagesRead = (data: {
+      senderId: string;
+      readAt: string;
+    }) => {
+      // This event is received by the reader when they mark messages as read
+      if (data.senderId === otherUserId) {
+        // Update my local state to reflect that I've read messages from this sender
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.sender._id === data.senderId && !msg.readAt
+              ? { ...msg, readAt: data.readAt }
+              : msg
+          )
+        );
+      }
+    };
+
+    const handleAllDirectMessagesRead = (data: {
+      readerId: string;
+      readAt: string;
+    }) => {
+      // This event is received by the sender when the recipient reads their messages
+      if (data.readerId === otherUserId && currentUser) {
+        // Update my local state to show that the other user has read my messages
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.sender._id === currentUser.id &&
+            msg.recipient._id === data.readerId &&
+            !msg.readAt
+              ? { ...msg, readAt: data.readAt }
+              : msg
+          )
+        );
+      }
     };
 
     socket.on("newDirectMessage", handleNewDirectMessage);
     socket.on("directMessagesRead", handleDirectMessagesRead);
+    socket.on("allDirectMessagesRead", handleAllDirectMessagesRead);
 
     return () => {
       socket.off("newDirectMessage", handleNewDirectMessage);
       socket.off("directMessagesRead", handleDirectMessagesRead);
+      socket.off("allDirectMessagesRead", handleAllDirectMessagesRead);
     };
   }, [otherUserId]);
 
@@ -114,8 +139,8 @@ const DirectMessageChat: React.FC = () => {
     if (!otherUserId || (!content.trim() && !imageUrl)) return;
 
     socket.emit("sendDirectMessage", {
-      recipientId: otherUserId,
-      message: content,
+      receiverId: otherUserId,
+      content: content,
       imageUrl,
     });
   };

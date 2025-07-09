@@ -4,6 +4,17 @@ A modern, full-stack real-time chat application with advanced features, robust s
 
 ---
 
+## Recent Improvements (2025)
+
+- **Direct Messaging (DM) is now fully real-time**: Messages appear instantly in the chat window, including your own, with no refresh needed.
+- **Notification pills and "seen" status**: DM notification pills and "seen" indicators update live as soon as messages are read.
+- **Robust user identification**: The app now correctly distinguishes between the current user (`id`) and other users (`_id`) everywhere, ensuring correct message alignment and user-specific features.
+- **All real-time features are robust**: Room user lists, online status, notifications, and DMs are all fully synchronized and update instantly.
+- **Type safety and defensive checks**: All socket events and user objects are now strictly typed and validated, preventing mismatches and runtime bugs.
+- **Bugfixes**: Messages always appear on the correct side (yours vs. others) in both chatrooms and DMs. Your own DM messages now appear instantly in the chat window.
+
+---
+
 ## Features
 
 ### Authentication & User Management
@@ -23,8 +34,7 @@ A modern, full-stack real-time chat application with advanced features, robust s
 - **Room creation, editing, and deletion**: Only authorized users (owners/admins) can manage rooms.
 - **Join/leave rooms**: Users can join/leave rooms, and secret rooms require an invite code.
 - **Room user list**: See a real-time list of users in each room, with avatars and online status.
-- **Room search**: Search rooms by name, type, or other metadata.
-- **Room avatars and color themes**: Each room can have a custom avatar and color theme for easy identification.
+- **Room search**: Search rooms by name or type.
 
 ### Messaging
 
@@ -34,10 +44,14 @@ A modern, full-stack real-time chat application with advanced features, robust s
 - **GIF picker**: Integrated Tenor GIF search and picker (via gif-picker-react) for fun, expressive chats.
 - **Message history**: All messages are persisted in MongoDB and loaded on room join.
 - **Message timestamps**: Relative and absolute timestamps, with hover/click to reveal details.
-- **Typing indicators**: See when other users are typing in real time.
-- **Message read receipts**: Optional per room, shows who has read each message.
 - **Message bubble effects**: Modern 3D, gradient, and shadow effects for a beautiful chat experience.
-- **Direct messaging** (WORK IN PROGRESS): Private one-on-one conversations between users with real-time delivery, read receipts, and message history. Users can search for other users and start direct conversations.
+- **Direct messaging**: Private one-on-one conversations between users with real-time delivery, "seen" status, and message history. Users can search for other users and start direct conversations.
+- **Notification pills and "seen" status**: DM notification pills and "seen" indicators update live as soon as messages are read.
+
+<!-- The following features are not yet implemented, so they are commented out for clarity:
+- Typing indicators: See when other users are typing in real time. (NOT IMPLEMENTED)
+- Message read receipts: Optional per room, shows who has read each message. (NOT IMPLEMENTED)
+-->
 
 ### UI/UX
 

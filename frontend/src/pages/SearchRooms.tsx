@@ -1,5 +1,4 @@
-import RoomSearch from "../components/RoomSearch";
-import AppLayout from "../components/AppLayout";
+import { RoomSearch, AppLayout } from "../components";
 
 const SearchRoomsPage = () => {
   return (

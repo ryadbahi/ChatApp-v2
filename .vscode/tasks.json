@@ -1,0 +1,14 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "args": ["run", "dev"],
+      "command": "npm",
+      "group": "build",
+      "isBackground": true,
+      "label": "Start Frontend Dev Server",
+      "problemMatcher": [],
+      "type": "shell"
+    }
+  ]
+}

@@ -1,6 +1,9 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import MessageBubble from "../components/MessageBubble";
-import UserActionDropdown from "../components/UserActionDropdown";
+import {
+  MessageBubble,
+  UserActionDropdown,
+  RichMessageInput,
+} from "../components";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "../api/axios";
 import { useChatRoom } from "../hooks/useChatRoom";
@@ -16,7 +19,6 @@ import {
 import type { Room, Message, CreateRoomData, User } from "../types/types";
 import { joinRoom, editRoom, deleteRoom } from "../api/rooms";
 import clsx from "clsx";
-import RichMessageInput from "../components/RichMessageInput";
 
 interface EditRoomModalProps {
   room: Room;
@@ -334,6 +336,11 @@ const ChatRoom = () => {
     navigate(`/direct-messages/${userId}`);
   };
 
+  // Helper: call scrollToBottom on image load
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   // Error state
   if (error) {
     return (
@@ -442,6 +449,7 @@ const ChatRoom = () => {
               msg={msg}
               isMe={msg.sender._id === user?.id}
               onUserClick={handleUserClick}
+              handleImgLoad={scrollToBottom}
             />
           ))}
           <div ref={messagesEndRef} />

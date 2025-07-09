@@ -1,5 +1,5 @@
 import { useState } from "react";
-import AuthForm from "../components/AuthForm";
+import { AuthForm } from "../components";
 
 const LoginRegister = () => {
   const [isRegister, setIsRegister] = useState(false);

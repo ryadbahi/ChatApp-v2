@@ -18,7 +18,7 @@ export function useChatRoom(
       socket.connect();
     }
 
-    socket.emit("joinRoom", roomId);
+    socket.emit("joinRoom", { roomId });
     socket.on("newMessage", onNewMessage);
 
     return () => {

@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import ChatRoom from "./ChatRoom";
-import RoomUsersList from "../components/RoomUsersList";
+import { RoomUsersList } from "../components";
 import { useParams } from "react-router-dom";
 import { socket } from "../socket";
 import { useAuth } from "../context/AuthContext";
@@ -18,11 +18,11 @@ const ChatRoomWithUsers: React.FC = () => {
     }
 
     // Join room when component mounts
-    socket.emit("joinRoom", roomId);
+    socket.emit("joinRoom", { roomId });
 
     // Force a room users update request after a short delay
     const timer = setTimeout(() => {
-      socket.emit("getRoomUsers", roomId, () => {
+      socket.emit("getRoomUsers", { roomId }, () => {
         // This callback ensures we get fresh user data
       });
     }, 100);
@@ -30,7 +30,7 @@ const ChatRoomWithUsers: React.FC = () => {
     // Cleanup: leave room when component unmounts
     return () => {
       clearTimeout(timer);
-      socket.emit("leaveRoom", roomId);
+      socket.emit("leaveRoom", { roomId });
     };
   }, [roomId, user]);
 

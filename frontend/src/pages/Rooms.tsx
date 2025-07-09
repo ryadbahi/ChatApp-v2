@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
 import { socket } from "../socket";
-import { useNavigate } from "react-router-dom";
+//import { useNavigate } from "react-router-dom";
 // Join all rooms on the list for live user counts
 import type { Room } from "../types/types";
-import RoomCard from "../components/RoomCard";
-import Toast from "../components/Toast";
+import { RoomCard, Toast, CreateRoomForm } from "../components";
 import { getRooms, getCreatedRooms } from "../api/rooms";
-import CreateRoomForm from "../components/CreateRoomForm";
 import { useRoom } from "../context/RoomContext";
-import { FiUsers } from "react-icons/fi";
+//import { FiUsers } from "react-icons/fi";
 
 interface TabProps {
   label: string;
@@ -64,7 +62,7 @@ const RoomGrid: React.FC<{
 };
 
 const Rooms = () => {
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"all" | "created">("all");
   const [allRooms, setAllRooms] = useState<Room[]>([]);
   const [createdRooms, setCreatedRooms] = useState<Room[]>([]);
@@ -276,7 +274,7 @@ const Rooms = () => {
 
       <div className="w-full max-w-6xl space-y-8">
         {/* Navigation Bar */}
-        <div className="flex items-center justify-between bg-white/10 backdrop-blur-sm rounded-lg p-4">
+        {/* <div className="flex items-center justify-between bg-white/10 backdrop-blur-sm rounded-lg p-4">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => navigate("/rooms")}
@@ -290,7 +288,7 @@ const Rooms = () => {
               <span>Rooms</span>
             </button>
           </div>
-        </div>
+        </div> */}
 
         <div className="flex justify-between items-center">
           <h1 className="text-4xl font-bold text-white">Chat Rooms</h1>

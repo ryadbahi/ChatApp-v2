@@ -11,7 +11,7 @@ import authRoutes from "./routes/auth.route";
 import roomRoutes from "./routes/room.route";
 import messageRoutes from "./routes/message.route";
 import { errorHandler } from "./middlewares/errorHandler";
-import { setupSocket } from "./socket"; // 👈 socket logic separated
+import { setupSocket } from "./socket/socket"; // 👈 socket logic separated
 
 // Global socket instance for use in controllers
 export let globalSocketIO: Server;

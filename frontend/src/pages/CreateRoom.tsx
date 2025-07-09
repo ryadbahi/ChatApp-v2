@@ -1,5 +1,4 @@
-import CreateRoomForm from "../components/CreateRoomForm";
-import AppLayout from "../components/AppLayout";
+import { CreateRoomForm, AppLayout } from "../components";
 import { useNavigate } from "react-router-dom";
 import { useRoom } from "../context/RoomContext";
 

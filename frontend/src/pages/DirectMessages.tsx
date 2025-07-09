@@ -5,7 +5,7 @@ import {
   searchUsersForDM,
 } from "../api/directMessages";
 import type { User, DMThread } from "../types/types";
-import Toast from "../components/Toast";
+import { Toast } from "../components";
 import { FiSearch, FiMessageCircle, FiPlus } from "react-icons/fi";
 
 const DirectMessages: React.FC = () => {

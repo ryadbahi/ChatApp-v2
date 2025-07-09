@@ -8,8 +8,7 @@ import Rooms from "./pages/Rooms";
 import JoinPrivate from "./pages/JoinPrivate";
 import DirectMessages from "./pages/DirectMessages";
 import DirectMessageChat from "./pages/DirectMessageChat";
-import SocketTest from "./components/SocketTest";
-import ProtectedRoute from "./components/ProtectedRoute";
+import { SocketTest, ProtectedRoute } from "./components";
 //import { useAuth } from "./context/AuthContext";
 
 function App(): React.JSX.Element {

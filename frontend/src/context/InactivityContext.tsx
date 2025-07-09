@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { socket, logoutUser } from "../socket";
-import InactivityWarning from "../components/InactivityWarning";
+import { InactivityWarning } from "../components";
 
 interface InactivityContextType {
   showWarning: boolean;
