@@ -170,29 +170,22 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           <div
             ref={bubbleRef}
             className={clsx(
-              "relative backdrop-blur-md rounded-2xl px-4 py-3 pt-3 text-base leading-normal break-words cursor-pointer",
-              "transition-all duration-300 group-hover:shadow-2xl border",
-              "animate-fadeIn hover:translate-y-[-2px]",
-              {
-                "bg-gradient-to-br from-indigo-600/90 via-purple-600/90 to-purple-700/90 text-white text-right border-purple-500/30":
-                  isMe,
-                "bg-gradient-to-br from-white/90 via-white/80 to-slate-100/90 text-gray-800 text-left border-white/30":
-                  !isMe,
-              }
+              "relative rounded-2xl px-4 py-3 pt-3 text-base leading-normal break-words cursor-pointer",
+              "transition-all duration-300 group-hover:shadow-2xl border shadow-2xl",
+              "animate-fadeIn hover:translate-y-[-2px] backdrop-blur-xl",
+              isMe
+                ? "bg-purple-400/30 text-white text-right border-white/30"
+                : "bg-white/30 text-gray-800 text-left border-white/30"
             )}
             style={{
               wordBreak: "break-word",
               width: "fit-content",
-              minWidth: Math.max(usernameWidth + 32, 80), // username width + bubble padding or 80px min
+              minWidth: Math.max(usernameWidth + 32, 80),
               paddingTop: "2.2rem",
               transformStyle: "preserve-3d",
               transform: `perspective(1000px) ${
                 isMe ? "rotateY(-1deg)" : "rotateY(1deg)"
               } rotateX(1deg)`,
-              boxShadow: isMe
-                ? "0 10px 20px -10px rgba(124, 58, 237, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1)"
-                : "0 10px 20px -10px rgba(30, 64, 175, 0.2), 0 4px 8px rgba(0, 0, 0, 0.05)",
-              transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
             }}
             onClick={handleBubbleClick}
             tabIndex={0}

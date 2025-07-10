@@ -440,7 +440,7 @@ const ChatRoom = () => {
 
       <div className="flex flex-col flex-1 min-h-0">
         <div
-          className="flex-1 min-h-0 overflow-y-auto p-4 space-y-2 mb-4 bg-white/20 rounded-2xl border border-white/30 shadow-2xl backdrop-blur-3xl"
+          className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 mb-4 bg-white/20 rounded-2xl border border-white/30 shadow-2xl backdrop-blur-3xl"
           style={{ boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)" }}
         >
           {messages.map((msg) => (

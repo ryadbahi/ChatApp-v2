@@ -8,6 +8,8 @@ export const getDirectMessages = asyncHandler(
   async (req: Request, res: Response): Promise<any> => {
     const userId = req.userId;
     const { otherUserId } = req.params;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
 
     if (!userId) {
       return res.status(401).json({ msg: "User not authenticated" });
@@ -18,7 +20,19 @@ export const getDirectMessages = asyncHandler(
     }
 
     try {
-      // Get messages between the two users
+      // Calculate skip value for pagination
+      const skip = (page - 1) * limit;
+
+      // Get total count for hasMore calculation
+      const totalMessages = await DirectMessage.countDocuments({
+        $or: [
+          { sender: userId, recipient: otherUserId },
+          { sender: otherUserId, recipient: userId },
+        ],
+      });
+
+      // Get messages between the two users with pagination
+      // Sort by createdAt descending to get newest first, then reverse for oldest first display
       const messages = await DirectMessage.find({
         $or: [
           { sender: userId, recipient: otherUserId },
@@ -27,13 +41,24 @@ export const getDirectMessages = asyncHandler(
       })
         .populate("sender", "username avatar")
         .populate("recipient", "username avatar")
-        .sort({ createdAt: 1 })
-        .limit(100); // Limit to last 100 messages
+        .sort({ createdAt: -1 }) // Get newest first
+        .skip(skip)
+        .limit(limit);
+
+      // Reverse to show oldest first (chronological order)
+      const orderedMessages = messages.reverse();
+
+      // Calculate if there are more messages
+      const hasMore = skip + messages.length < totalMessages;
 
       res.json({
         success: true,
         data: {
-          messages,
+          messages: orderedMessages,
+          hasMore,
+          total: totalMessages,
+          page,
+          limit,
         },
       });
     } catch (error) {
@@ -200,7 +225,7 @@ export const getRecentConversations = asyncHandler(
                   if: {
                     $and: [
                       { $eq: ["$recipient", userId] },
-                      { $not: { $ifNull: ["$readAt", false] } },
+                      { $eq: [{ $ifNull: ["$readAt", null] }, null] },
                     ],
                   },
                   then: 1,
@@ -222,6 +247,22 @@ export const getRecentConversations = asyncHandler(
           $unwind: "$otherUserData",
         },
         {
+          $lookup: {
+            from: "users",
+            localField: "lastMessage.sender",
+            foreignField: "_id",
+            as: "senderData",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "lastMessage.recipient",
+            foreignField: "_id",
+            as: "recipientData",
+          },
+        },
+        {
           $project: {
             _id: 1,
             otherUser: {
@@ -229,7 +270,16 @@ export const getRecentConversations = asyncHandler(
               username: "$otherUserData.username",
               avatar: "$otherUserData.avatar",
             },
-            lastMessage: "$lastMessage",
+            lastMessage: {
+              _id: "$lastMessage._id",
+              sender: { $arrayElemAt: ["$senderData", 0] },
+              recipient: { $arrayElemAt: ["$recipientData", 0] },
+              content: "$lastMessage.content",
+              imageUrl: "$lastMessage.imageUrl",
+              readAt: "$lastMessage.readAt",
+              createdAt: "$lastMessage.createdAt",
+              updatedAt: "$lastMessage.updatedAt",
+            },
             unreadCount: 1,
           },
         },

@@ -1,5 +1,4 @@
 import rateLimit from "express-rate-limit";
-import { NextFunction, Request, Response } from "express";
 
 // Rate limiter for join attempts
 export const joinRoomLimiter = rateLimit({

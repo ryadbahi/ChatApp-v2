@@ -1,0 +1,5 @@
+.slate-placeholder-centered:empty:before {
+  text-align: center;
+  width: 100%;
+  display: block;
+}
