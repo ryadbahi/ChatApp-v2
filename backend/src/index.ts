@@ -22,7 +22,7 @@ const app = express();
 const server = http.createServer(app);
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://chat-app-v2-1owv215r9-ryadbahis-projects.vercel.app"
+  "https://chat-app-v2-1owv215r9-ryadbahis-projects.vercel.app",
 ];
 const io = new Server(server, {
   cors: {
