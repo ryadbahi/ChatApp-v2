@@ -28,9 +28,7 @@
     "react-router-dom": "^7.6.3",
     "slate": "^0.117.2",
     "slate-react": "^0.117.3",
-    "socket.io-client": "^4.8.1"
-  },
-  "devDependencies": {
+    "socket.io-client": "^4.8.1",
     "@eslint/js": "^9.29.0",
     "@tailwindcss/vite": "^4.1.11",
     "@types/react": "^19.1.8",
@@ -46,5 +44,6 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.34.1",
     "vite": "^7.0.0"
-  }
+  },
+  "devDependencies": {}
 }
