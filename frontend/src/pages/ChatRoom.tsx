@@ -416,7 +416,6 @@ const ChatRoom = () => {
           </button>
         </div>
       </div>
-
       {showEditModal && (
         <EditRoomModal
           room={room}
@@ -424,10 +423,9 @@ const ChatRoom = () => {
           onCancel={() => setShowEditModal(false)}
         />
       )}
-
-      <div className="flex flex-col flex-1 min-h-0">
+      <div className="flex flex-col flex-1 min-h-0 relative">
         <div
-          className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 mb-4 bg-white/20 rounded-2xl border border-white/30 shadow-2xl backdrop-blur-3xl"
+          className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 mb-4 bg-white/20 rounded-2xl border border-white/30 shadow-2xl backdrop-blur-3xl relative"
           style={{ boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)" }}
         >
           {messages.map((msg) => (
@@ -440,21 +438,20 @@ const ChatRoom = () => {
             />
           ))}
           <div ref={messagesEndRef} />
+          {selectedUser && (
+            <UserActionDropdown
+              user={selectedUser}
+              isOpen={!!selectedUser}
+              onClose={handleCloseDropdown}
+              onOpenDM={handleOpenDM}
+              position={dropdownPosition}
+            />
+          )}
         </div>
         <div className="flex gap-2 mt-2 shrink-0 bg-white/20 rounded-2xl border border-white/30 shadow-2xl backdrop-blur-3xl p-2">
           <RichMessageInput onSend={handleSend} />
         </div>
       </div>
-
-      {selectedUser && (
-        <UserActionDropdown
-          user={selectedUser}
-          isOpen={!!selectedUser}
-          onClose={handleCloseDropdown}
-          onOpenDM={handleOpenDM}
-          position={dropdownPosition}
-        />
-      )}
     </div>
   );
 };

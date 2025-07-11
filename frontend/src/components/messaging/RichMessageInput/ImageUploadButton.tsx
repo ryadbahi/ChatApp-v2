@@ -37,7 +37,7 @@ const ImageUploadButton: React.FC<ImageUploadButtonProps> = ({
 
   return (
     <label
-      className="ml-2 pt-2 pb-2 cursor-pointer px-2 py-1 rounded text-indigo-700 bg-white transition-all"
+      className="ml-2 pt-2 pb-2 cursor-pointer px-2 py-1 rounded text-indigo-700bg-white/20 text-white hover:bg-white/30 transition-all"
       onClick={onFocusEditor}
     >
       <FaRegFileImage size={18} />

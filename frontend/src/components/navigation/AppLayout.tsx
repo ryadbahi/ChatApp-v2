@@ -200,7 +200,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   }, []);
 
   return (
-    <div className="h-screen w-full flex flex-col bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 overflow-hidden relative">
+    <div className="h-screen w-full flex flex-col overflow-hidden relative">
       {/* Navbar */}
       <div className="w-full bg-black/20 backdrop-blur-md shadow-xl z-50 border-b border-white/20">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">

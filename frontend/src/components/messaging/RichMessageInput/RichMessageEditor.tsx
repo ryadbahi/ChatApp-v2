@@ -1,5 +1,4 @@
 import React, { useCallback } from "react";
-import "./slatePlaceholderCentered.css";
 import { Slate, Editable } from "slate-react";
 import { Element, Leaf } from "../SlateElements";
 

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { IoIosColorPalette } from "react-icons/io";
 import { Editor } from "slate";
 
 interface TextColorPickerProps {
@@ -72,13 +73,13 @@ const TextColorPicker: React.FC<TextColorPickerProps> = ({
       >
         {/* Small "A" indicator */}
         <span
-          className="absolute inset-0 flex items-center justify-center text-xs font-bold"
+          className="absolute inset-0 flex items-center justify-center  font-bold"
           style={{
             color: currentColor === "#ffffff" ? "#000000" : "#ffffff",
             textShadow: "1px 1px 1px rgba(0,0,0,0.5)",
           }}
         >
-          A
+          <IoIosColorPalette />
         </span>
       </button>
 

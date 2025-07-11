@@ -4,7 +4,8 @@
 
 body {
   min-height: 100vh;
-  background: linear-gradient(to bottom right, #4f46e5, #8b5cf6, #ec4899);
+  background: linear-gradient(to bottom right, #4c1d95, #1e3a8a, #312e81);
+
   margin: 0;
   font-family: "Inter", sans-serif;
 }

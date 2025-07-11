@@ -62,7 +62,7 @@ const EmojiPickerButton: React.FC<EmojiPickerButtonProps> = ({
     <div className="relative ml-2">
       <button
         type="button"
-        className="px-2 py-1 rounded bg-pink-500 text-white hover:bg-pink-600"
+        className="ml-2 pt-2 pb-2 cursor-pointer px-2 py-1 rounded text-indigo-700bg-white/20 text-white hover:bg-white/30 transition-all"
         onClick={handleButtonClick}
       >
         😊

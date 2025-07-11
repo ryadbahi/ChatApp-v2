@@ -53,8 +53,8 @@ const GifPickerButton: React.FC<GifPickerButtonProps> = ({
     <div className="relative">
       <button
         type="button"
-        className="ml-2 pt-2 pb-2 px-2 rounded text-pink-700 bg-white transition-all font-bold"
-        style={{ minWidth: 36 }}
+        className="ml-2 pt-2 pb-2 cursor-pointer px-2 py-1 rounded text-indigo-700bg-white/20 text-white hover:bg-white/30 transition-all font-bold"
+        style={{ minWidth: 30 }}
         onClick={handleButtonClick}
         aria-label="Pick a GIF"
       >

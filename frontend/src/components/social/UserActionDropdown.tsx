@@ -23,7 +23,6 @@ const UserActionDropdown: React.FC<UserActionDropdownProps> = ({
   user,
   isOpen,
   onClose,
-  position,
   onOpenDM,
 }) => {
   const { user: currentUser } = useAuth();
@@ -151,12 +150,7 @@ const UserActionDropdown: React.FC<UserActionDropdownProps> = ({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.15 }}
-        className="fixed z-50 bg-white/10 backdrop-blur-md rounded-xl shadow-xl border border-white/20 p-2 min-w-[180px]"
-        style={{
-          left: Math.min(position.x, window.innerWidth - 200),
-          top: Math.max(10, position.y),
-          transform: "translate(-50%, 0)",
-        }}
+        className="fixed z-50 bg-white/10 backdrop-blur-md rounded-xl shadow-xl border border-white/20 p-1 min-w-[180px]"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-2 border-b border-white/20 mb-2">
