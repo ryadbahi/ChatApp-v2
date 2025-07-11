@@ -11,16 +11,9 @@ export default function ProtectedRoute({
 }) {
   const { user, loading } = useAuth();
 
-  console.log("[ProtectedRoute] render", {
-    user,
-    loading,
-    pathname: window.location.pathname,
-  });
-
   if (loading) return <p className="p-4">Loading...</p>;
 
   if (!user) {
-    console.log("[ProtectedRoute] redirect to /login");
     return <Navigate to="/login" replace />;
   }
 

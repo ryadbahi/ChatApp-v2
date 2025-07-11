@@ -169,16 +169,9 @@ const ChatRoom = () => {
   useEffect(() => {
     if (!roomId || !user) return;
 
-    console.log("[ChatRoom] useEffect triggered", { roomId, user: user.id });
-    console.log("[ChatRoom] Location state:", location.state);
-
     // Check if we have room data from navigation state (from successful password join)
     const navigationState = location.state as { roomData?: Room };
     if (navigationState?.roomData) {
-      console.log(
-        "[ChatRoom] Using room data from navigation state:",
-        navigationState.roomData
-      );
       setRoom(navigationState.roomData);
       setIsCreator(navigationState.roomData.createdBy._id === user.id);
 
@@ -194,17 +187,11 @@ const ChatRoom = () => {
 
     const fetchRoomAndJoin = async () => {
       try {
-        console.log(
-          "[ChatRoom] Attempting to join room with empty credentials"
-        );
         // Try to join with empty credentials first (works for public rooms and creators)
         const joinedRoom = await joinRoom(roomId, {});
-        console.log("[ChatRoom] Successfully joined room:", joinedRoom);
         setRoom(joinedRoom);
         setIsCreator(joinedRoom.createdBy._id === user.id);
       } catch (err: any) {
-        console.error("[ChatRoom] Failed to access room", err);
-
         if (err.response?.status === 429) {
           setError(
             "You've made too many attempts to join rooms. Please try again later."

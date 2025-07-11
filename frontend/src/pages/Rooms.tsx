@@ -112,7 +112,7 @@ const Rooms = () => {
   // Listen for room creation events from other components (like navbar)
   useEffect(() => {
     const handleRoomCreated = (room: any) => {
-      console.log("Room created event received:", room);
+      // Room created event received
 
       // Normalize ID
       const normalizedRoom = {
@@ -136,25 +136,19 @@ const Rooms = () => {
 
   // Fetch live user counts for public rooms only
   useEffect(() => {
-    console.log("[Rooms] Socket connected:", socket.connected);
     if (!socket.connected) {
-      console.log("[Rooms] Socket not connected, waiting...");
       socket.on("connect", () => {
-        console.log("[Rooms] Socket connected, fetching user counts");
         socket.emit(
           "getPublicRoomsUserCounts",
           (counts: Record<string, number>) => {
-            console.log("[Rooms] Received user counts:", counts);
             setUserCounts(counts || {});
           }
         );
       });
     } else {
-      console.log("[Rooms] Socket already connected, fetching user counts");
       socket.emit(
         "getPublicRoomsUserCounts",
         (counts: Record<string, number>) => {
-          console.log("[Rooms] Received user counts:", counts);
           setUserCounts(counts || {});
         }
       );

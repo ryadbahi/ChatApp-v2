@@ -27,31 +27,16 @@ const JoinSecretRoom = ({ onSuccess, onCancel }: JoinSecretRoomProps) => {
     setIsLoading(true);
 
     try {
-      console.log("[JoinSecretRoom] Attempting to join secret room:", {
-        name: roomName,
-      });
-
       // Call backend to join secret room by name
       const result = await joinSecretRoomByName({ name: roomName, password });
-      console.log("[JoinSecretRoom] Successfully joined secret room:", result);
 
       // Navigate directly to chat room with room data in state
-      console.log("[JoinSecretRoom] Navigating to chat room with state:", {
-        roomData: result,
-      });
       navigate(`/chat/${result.id}`, {
         state: { roomData: result },
       });
 
       onSuccess?.(result.id, roomName);
     } catch (err: any) {
-      console.error("[JoinSecretRoom] Failed to join secret room:", err);
-      console.error("[JoinSecretRoom] Error details:", {
-        status: err.response?.status,
-        data: err.response?.data,
-        message: err.message,
-      });
-
       if (err.response?.status === 403) {
         setError("Invalid room name or password. Please try again.");
       } else if (err.response?.status === 400) {

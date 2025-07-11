@@ -41,13 +41,15 @@ export const signup = async (req: Request, res: Response): Promise<any> => {
     return res
       .cookie("token", accessToken, {
         httpOnly: true,
-        secure: false,
-        maxAge: 15 * 60 * 1000,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 15 * 60 * 1000, // 15 minutes
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
       })
       .cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        secure: false,
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
       })
       .status(201)
       .json({
@@ -91,13 +93,15 @@ export const login = async (
     return res
       .cookie("token", accessToken, {
         httpOnly: true,
-        secure: false,
-        maxAge: 15 * 60 * 1000,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 15 * 60 * 1000, // 15 minutes
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
       })
       .cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        secure: false,
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
       })
       .json({
         user: {
@@ -113,15 +117,38 @@ export const login = async (
 };
 
 export const logout = async (req: Request, res: Response) => {
-  // Supprime tous les refresh tokens de l'utilisateur
-  if (req.userId) {
-    await RefreshToken.deleteMany({ user: req.userId });
+  try {
+    // Get refresh token from cookies
+    const refreshToken = req.cookies.refreshToken;
+
+    // Delete the specific refresh token if it exists
+    if (refreshToken) {
+      await RefreshToken.deleteOne({ token: refreshToken });
+    }
+
+    // If user is authenticated, delete all their refresh tokens for security
+    if (req.userId) {
+      await RefreshToken.deleteMany({ user: req.userId });
+    }
+
+    // Clear cookies with proper options
+    res
+      .clearCookie("token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+      })
+      .clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+      })
+      .status(200)
+      .json({ msg: "Logged out successfully" });
+  } catch (err) {
+    console.error("Logout error:", err);
+    res.status(500).json({ msg: "Logout failed" });
   }
-  res
-    .clearCookie("token", { httpOnly: true, secure: false })
-    .clearCookie("refreshToken", { httpOnly: true, secure: false })
-    .status(200)
-    .json({ msg: "Logged out" });
 };
 
 export const getMe = async (req: Request, res: Response): Promise<void> => {
@@ -269,26 +296,61 @@ export const changePassword = async (
 
 export const refreshToken = async (req: Request, res: Response, next: any) => {
   try {
-    const token = req.cookies.refreshToken;
-    if (!token) {
+    const oldRefreshToken = req.cookies.refreshToken;
+    if (!oldRefreshToken) {
       res.status(401).json({ message: "No refresh token" });
       return;
     }
-    const stored = await RefreshToken.findOne({ token });
-    if (!stored) {
+
+    // Find the stored refresh token
+    const storedToken = await RefreshToken.findOne({ token: oldRefreshToken });
+    if (!storedToken) {
       res.status(403).json({ message: "Invalid refresh token" });
       return;
     }
-    const payload = jwt.verify(token, process.env.JWT_REFRESH_SECRET!);
-    // @ts-ignore
-    const accessToken = createAccessToken(payload.id);
-    res.cookie("token", accessToken, {
-      httpOnly: true,
-      secure: false,
-      maxAge: 15 * 60 * 1000,
+
+    // Check if token is expired
+    if (storedToken.expires < new Date()) {
+      await RefreshToken.deleteOne({ token: oldRefreshToken });
+      res.status(403).json({ message: "Refresh token expired" });
+      return;
+    }
+
+    // Verify the token
+    const payload = jwt.verify(
+      oldRefreshToken,
+      process.env.JWT_REFRESH_SECRET!
+    ) as { id: string };
+
+    // Create new tokens (rotation for security)
+    const newAccessToken = createAccessToken(payload.id);
+    const newRefreshToken = createRefreshToken(payload.id);
+
+    // Delete old refresh token and save new one
+    await RefreshToken.deleteOne({ token: oldRefreshToken });
+    await RefreshToken.create({
+      user: payload.id,
+      token: newRefreshToken,
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
     });
-    res.json({ success: true });
+
+    // Set new cookies
+    res
+      .cookie("token", newAccessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 15 * 60 * 1000, // 15 minutes
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+      })
+      .cookie("refreshToken", newRefreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+      })
+      .json({ success: true });
   } catch (err) {
+    console.error("Refresh token error:", err);
     res.status(403).json({ message: "Invalid refresh token" });
   }
 };

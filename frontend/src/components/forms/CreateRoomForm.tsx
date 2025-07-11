@@ -63,9 +63,7 @@ const CreateRoomForm: React.FC<CreateRoomFormProps> = ({
         visibility,
         ...(visibility !== "public" && { password }),
       };
-      console.log("Creating room with data:", roomData);
       const createdRoom = await createRoom(roomData);
-      console.log("Room created successfully:", createdRoom);
 
       // Only call onSuccess if we have a valid room response
       if (createdRoom) {
@@ -73,7 +71,6 @@ const CreateRoomForm: React.FC<CreateRoomFormProps> = ({
           ...createdRoom,
           _id: createdRoom._id || createdRoom.id,
         };
-        console.log("Calling onSuccess with:", roomWithId);
 
         // Create a callback to reset loading state
         const resetLoading = () => setIsLoading(false);

@@ -69,10 +69,7 @@ const EmojiPickerButton: React.FC<EmojiPickerButtonProps> = ({
       </button>
 
       {showEmoji && (
-        <div
-          className="absolute bottom-full mb-2 right-5 z-50"
-          ref={emojiDropdownRef}
-        >
+        <div className="absolute bottom-full mb-2  z-50" ref={emojiDropdownRef}>
           <Suspense fallback={<div>Loading…</div>}>
             <EmojiPicker
               onEmojiClick={handleEmojiClickPersistent}
@@ -80,8 +77,8 @@ const EmojiPickerButton: React.FC<EmojiPickerButtonProps> = ({
               previewConfig={{ showPreview: false }}
               autoFocusSearch={false}
               searchDisabled={false}
-              width={400}
-              height={400}
+              width={350}
+              height={450}
               reactionsDefaultOpen={true}
             />
           </Suspense>

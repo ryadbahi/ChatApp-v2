@@ -38,18 +38,17 @@ export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
 );
 
 // Handle reconnection
-socket.on("connect_error", (error) => {
-  console.error("[Socket] Connection error:", error.message);
+socket.on("connect_error", () => {
+  // Connection error occurred
 });
 
 socket.on("connect", () => {
-  console.log("[Socket] Connected");
   // Update auth token on reconnect
   socket.auth = { token: getToken() };
 });
 
-socket.on("disconnect", (reason) => {
-  console.log("[Socket] Disconnected:", reason);
+socket.on("disconnect", () => {
+  // Socket disconnected
 });
 
 // DISABLED: Activity tracking functions no longer used
@@ -91,7 +90,3 @@ activityEvents.forEach((event) => {
   document.addEventListener(event, trackActivity, true);
 });
 */
-
-console.log(
-  "[Socket] Frontend activity tracking DISABLED - only meaningful actions reset inactivity timer"
-);

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import axios from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import { socket } from "../socket";
+import { useTokenRefresh } from "../hooks/useTokenRefresh";
 
 // Define the shape of a user
 export interface User {
@@ -33,26 +34,32 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [authChecked, setAuthChecked] = useState(false); // NEW: know when auth is done
+  const [authChecked, setAuthChecked] = useState(false);
   const navigate = useNavigate();
+
+  // Set up silent token refresh when user is authenticated
+  useTokenRefresh(!!user);
+
   // Helper to avoid redirect loop
   const isOnLoginPage = () => window.location.pathname === "/login";
 
-  // Check if user is still authenticated on mount, with refresh fallback
+  // Check if user is still authenticated on mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Get token from cookies
         const token = getTokenFromCookies();
-        console.log("[Auth] Checking auth, token exists:", !!token);
 
-        // Always try to get user info, even if token is missing (refresh may work)
-        let res;
+        // Skip auth check if on login page and no token exists
+        if (isOnLoginPage() && !token) {
+          setUser(null);
+          return;
+        }
+
+        // Try to get user info
         try {
-          res = await axios.get("/api/auth/me", {
+          const res = await axios.get("/api/auth/me", {
             withCredentials: true,
           });
-          console.log("[Auth] Backend verification successful:", res.data);
           setUser(res.data);
 
           // Connect socket with the token
@@ -61,31 +68,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             socket.connect();
           }
         } catch (err: any) {
-          // If 401, try refresh
-          if (err.response && err.response.status === 401) {
+          // If 401 and not on login page, try refresh
+          if (err.response?.status === 401 && !isOnLoginPage()) {
             try {
-              console.log("[Auth] Token expired, trying refresh...");
               await axios.post("/api/auth/refresh", null, {
                 withCredentials: true,
               });
+
               // Retry /me after refresh
               const retryRes = await axios.get("/api/auth/me", {
                 withCredentials: true,
               });
               setUser(retryRes.data);
+
               const newToken = getTokenFromCookies();
               if (newToken && socket.disconnected) {
                 socket.auth = { token: newToken };
                 socket.connect();
               }
             } catch (refreshErr) {
-              console.log("[Auth] Refresh failed, logging out", refreshErr);
               clearTokenFromCookies();
               setUser(null);
               if (socket.connected) socket.disconnect();
             }
           } else {
-            // Other error
+            // Other error or on login page
             clearTokenFromCookies();
             setUser(null);
             if (socket.connected) socket.disconnect();
@@ -93,11 +100,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       } finally {
         setLoading(false);
-        setAuthChecked(true); // NEW: auth check done
+        setAuthChecked(true);
       }
     };
+
     checkAuth();
   }, []);
+
+  // Login function
+  const login = async (credentials: { email: string; password: string }) => {
+    setLoading(true);
+    try {
+      const res = await axios.post("/api/auth/login", credentials, {
+        withCredentials: true,
+      });
+      setUser(res.data.user);
+
+      // Connect socket
+      const token = getTokenFromCookies();
+      if (token && socket.disconnected) {
+        socket.auth = { token };
+        socket.connect();
+      }
+
+      // Always redirect to rooms after successful login
+      navigate("/rooms");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Register function
   const register = async (data: {
@@ -110,48 +141,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const res = await axios.post("/api/auth/signup", data, {
         withCredentials: true,
       });
-      console.log("[Auth] Registration successful:", res.data.user);
       setUser(res.data.user);
 
-      // Connect socket with new token
+      // Connect socket
       const token = getTokenFromCookies();
-      if (token) {
+      if (token && socket.disconnected) {
         socket.auth = { token };
-        if (socket.disconnected) {
-          socket.connect();
-        }
+        socket.connect();
       }
-      navigate("/rooms");
-    } catch (err) {
-      console.error("[Auth] Register error", err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  // Login function
-  const login = async (credentials: { email: string; password: string }) => {
-    setLoading(true);
-    try {
-      const res = await axios.post("/api/auth/login", credentials, {
-        withCredentials: true,
-      });
-      console.log("[Auth] Login successful:", res.data.user);
-      setUser(res.data.user);
-
-      // Connect socket with new token
-      const token = getTokenFromCookies();
-      if (token) {
-        socket.auth = { token };
-        if (socket.disconnected) {
-          socket.connect();
-        }
-      }
+      // Redirect to rooms after successful registration
       navigate("/rooms");
-    } catch (err) {
-      console.error("[Auth] Login error", err);
-      throw err;
     } finally {
       setLoading(false);
     }
@@ -166,20 +166,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         withCredentials: true,
       });
     } catch (err) {
-      console.error("Logout error", err);
+      // Continue with cleanup even if backend call fails
     } finally {
-      // Always clear user state and tokens, even if backend call fails
+      // Always clear user state and tokens
       setUser(null);
-
-      // Clear token from cookies
       clearTokenFromCookies();
-
-      // Clear any localStorage items
       localStorage.clear();
-
-      // Disconnect socket
       socket.disconnect();
-
       setLoading(false);
 
       // Navigate to login only if not already there
@@ -189,26 +182,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Update user function to update the user state after profile edits
+  // Update user function
   const updateUser = (updatedUser: User) => {
     setUser(updatedUser);
   };
 
-  // DEBUG: log render state
-  console.log("AuthProvider render", {
-    user,
-    loading,
-    authChecked,
-    pathname: window.location.pathname,
-  });
-  // Only render children when auth check is done, else show loader (prevents redirect loop)
+  // Only render children when auth check is done
   if (!authChecked) {
     return (
-      <div style={{ textAlign: "center", marginTop: "2rem" }}>
-        Chargement...
+      <div className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white text-lg font-medium">Loading...</p>
+        </div>
       </div>
     );
   }
+
   return (
     <AuthContext.Provider
       value={{ user, loading, login, register, logout, updateUser }}
@@ -235,7 +225,9 @@ const getTokenFromCookies = (): string | null => {
   );
 };
 
-// Utility function to clear token from cookies
+// Utility function to clear tokens from cookies
 const clearTokenFromCookies = (): void => {
   document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  document.cookie =
+    "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 };

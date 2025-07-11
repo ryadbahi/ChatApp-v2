@@ -5,11 +5,12 @@ import { useAuth } from "../../context/AuthContext";
 import { useRoom } from "../../context/RoomContext";
 import type { ReactNode } from "react";
 import { useState, useRef, useEffect, useCallback } from "react";
+import { socket } from "../../socket";
 import { useIsRoomsPage } from "../../hooks/useIsRoomsPage";
 import RoomSearch from "./RoomSearch";
 import { CreateRoomForm, JoinSecretRoom } from "../forms";
 import Profile from "../../pages/Profile";
-import { FriendsList, DMThreadsMenu, DMWindow } from "../social";
+import { DMThreadsMenu, DMWindow, FriendsList } from "../social";
 import type { User } from "../../types/types";
 
 interface AppLayoutProps {
@@ -39,6 +40,36 @@ const NavbarButton = ({
   </motion.button>
 );
 
+const FriendsButton = ({
+  onlineFriendsCount,
+  friendRequestsCount,
+  onClick,
+}: {
+  onlineFriendsCount: number;
+  friendRequestsCount: number;
+  onClick?: () => void;
+}) => (
+  <motion.button
+    whileHover={{ scale: 1.05 }}
+    transition={{ type: "spring", stiffness: 300 }}
+    onClick={onClick}
+    className="group flex items-center gap-2 text-white hover:text-pink-300 transition-colors relative"
+    title={`Friends ${
+      onlineFriendsCount > 0 ? `(${onlineFriendsCount} online)` : ""
+    }`}
+  >
+    <FaUserFriends className="text-2xl" />
+    <span className="text-sm opacity-90 group-hover:opacity-100 transition-opacity hidden sm:inline">
+      Friends {onlineFriendsCount > 0 && `(${onlineFriendsCount})`}
+    </span>
+    {friendRequestsCount > 0 && (
+      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium z-10">
+        {friendRequestsCount > 9 ? "9+" : friendRequestsCount}
+      </span>
+    )}
+  </motion.button>
+);
+
 const AppLayout = ({ children }: AppLayoutProps) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -51,6 +82,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const [showFriendsList, setShowFriendsList] = useState(false);
   const [dmUser, setDmUser] = useState<User | null>(null);
   const [onlineFriends, setOnlineFriends] = useState<Set<string>>(new Set());
+  const [friendRequestsCount, setFriendRequestsCount] = useState(0);
   const profileRef = useRef<HTMLDivElement>(null);
   const searchModalRef = useRef<HTMLDivElement>(null);
   const createModalRef = useRef<HTMLDivElement>(null);
@@ -60,6 +92,53 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const handleOnlineFriendsChange = useCallback((ids: string[]) => {
     setOnlineFriends(new Set(ids));
   }, []);
+
+  // Callback to handle friend request count changes from FriendsList
+  const handleFriendRequestCountChange = useCallback((count: number) => {
+    setFriendRequestsCount(count);
+  }, []);
+  useEffect(() => {
+    if (!user) return;
+
+    // Listen for new friend requests
+    const handleNewFriendRequest = () => {
+      setFriendRequestsCount((prev) => prev + 1);
+    };
+
+    // Listen for friend request status changes
+    const handleFriendRequestAccepted = () => {
+      setFriendRequestsCount((prev) => Math.max(0, prev - 1));
+    };
+
+    const handleFriendRequestRejected = () => {
+      setFriendRequestsCount((prev) => Math.max(0, prev - 1));
+    };
+
+    // Set up socket listeners
+    socket.on("newFriendRequest", handleNewFriendRequest);
+    socket.on("friendRequestAccepted", handleFriendRequestAccepted);
+    socket.on("friendRequestRejected", handleFriendRequestRejected);
+
+    // Load initial friend request count when user logs in
+    import("../../api/friends").then(({ getFriendRequests }) => {
+      getFriendRequests()
+        .then((result) => {
+          if (result.success && result.data) {
+            setFriendRequestsCount(result.data.received?.length || 0);
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to load friend requests count:", error);
+        });
+    });
+
+    // Cleanup listeners
+    return () => {
+      socket.off("newFriendRequest", handleNewFriendRequest);
+      socket.off("friendRequestAccepted", handleFriendRequestAccepted);
+      socket.off("friendRequestRejected", handleFriendRequestRejected);
+    };
+  }, [user]);
 
   // Handle clicks outside of profile menu
   useEffect(() => {
@@ -103,11 +182,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   // Listen for custom events to open DM windows
   useEffect(() => {
-    const handleOpenDirectMessage = (event: CustomEvent) => {
-      const { userId } = event.detail;
+    const handleOpenDirectMessage = () => {
       // We would need to fetch the user data or pass it differently
-      // For now, we'll just log it
-      console.log("Opening DM for user:", userId);
+      // For now, this is handled elsewhere
     };
 
     window.addEventListener(
@@ -177,9 +254,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             />
 
             {/* Friends */}
-            <NavbarButton
-              icon={FaUserFriends}
-              label="Friends"
+            <FriendsButton
+              onlineFriendsCount={onlineFriends.size}
+              friendRequestsCount={friendRequestsCount}
               onClick={() => {
                 setShowFriendsList((prev) => !prev);
                 setShowSearch(false);
@@ -336,7 +413,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
           >
             <CreateRoomForm
               onSuccess={(room, joinAfterCreate, resetLoading) => {
-                console.log("[AppLayout] Room created successfully:", room);
+                // Room created successfully
 
                 // Notify all listeners (like Rooms.tsx) about the new room
                 notifyRoomCreated(room);
@@ -403,6 +480,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         onClose={() => setShowFriendsList(false)}
         onOpenDM={handleOpenDM}
         onOnlineFriendsChange={handleOnlineFriendsChange}
+        onFriendRequestCountChange={handleFriendRequestCountChange}
       />
 
       {/* DM Window */}

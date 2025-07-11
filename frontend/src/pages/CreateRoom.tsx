@@ -7,7 +7,7 @@ const CreateRoomPage = () => {
   const { notifyRoomCreated } = useRoom();
 
   const onRoomCreated = (room: any, joinAfterCreate: boolean) => {
-    console.log("[CreateRoomPage] Room created successfully:", room);
+    // Room created successfully
 
     // Notify all listeners about the new room
     notifyRoomCreated(room);

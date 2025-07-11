@@ -48,7 +48,7 @@ export const useSocketErrorHandler = (socket: any) => {
     };
 
     const handleConnect = () => {
-      console.log("Socket connected");
+      // Socket connected
     };
 
     const handleDisconnect = (reason: string) => {

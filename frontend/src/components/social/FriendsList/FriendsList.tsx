@@ -18,6 +18,7 @@ interface FriendsListProps {
   onClose: () => void;
   onOpenDM: (user: User) => void;
   onOnlineFriendsChange?: (ids: string[]) => void;
+  onFriendRequestCountChange?: (count: number) => void;
 }
 
 const FriendsList: React.FC<FriendsListProps> = ({
@@ -25,6 +26,7 @@ const FriendsList: React.FC<FriendsListProps> = ({
   onClose,
   onOpenDM,
   onOnlineFriendsChange,
+  onFriendRequestCountChange,
 }) => {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [friendRequests, setFriendRequests] = useState<{
@@ -40,6 +42,12 @@ const FriendsList: React.FC<FriendsListProps> = ({
       loadFriendsData();
     }
   }, [isOpen]);
+
+  // Notify parent about friend request count changes
+  useEffect(() => {
+    const receivedCount = friendRequests.received.length;
+    onFriendRequestCountChange?.(receivedCount);
+  }, [friendRequests.received.length, onFriendRequestCountChange]);
 
   useEffect(() => {
     if (!socket) return;

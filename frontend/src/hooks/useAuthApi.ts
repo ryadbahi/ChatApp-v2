@@ -68,7 +68,6 @@ export const useAuthApi = (): UseAuthApiReturn => {
         return true;
       } catch (error: any) {
         // The error should already be enhanced by axios interceptor
-        console.error("Login error:", error);
 
         // Use the user-friendly message from axios interceptor if available
         let message = error?.message;
@@ -133,8 +132,6 @@ export const useAuthApi = (): UseAuthApiReturn => {
         showSuccess("Account created successfully! Welcome!");
         return true;
       } catch (error: any) {
-        console.error("Register error:", error);
-
         // Use the user-friendly message from axios interceptor if available
         let message = error?.message;
 
