@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-// Show number of connected users on the card
 import { FaEdit, FaTrash, FaGlobe, FaLock, FaEyeSlash } from "react-icons/fa";
 import type { Room, CreateRoomData } from "../../types/types";
 import { editRoom, deleteRoom } from "../../api/rooms";
@@ -347,11 +345,16 @@ const RoomCard: React.FC<RoomCardProps> = ({
         <div className="text-sm text-white/70 mt-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
             <p>📅 {new Date(room.createdAt).toLocaleDateString()}</p>
-            {room.visibility === "public" && (
+            {room.visibility === "public" || room.createdBy._id === user?.id ? (
               <span className="ml-2 px-2 py-1 bg-blue-500/20 rounded text-blue-200 text-xs">
                 👥{" "}
                 {userCount !== null && userCount !== undefined ? userCount : 0}{" "}
                 online
+              </span>
+            ) : (
+              <span className="ml-2 px-2 py-1 bg-blue-500/20 rounded text-blue-200 text-xs inline-flex">
+                👥
+                <FaEyeSlash className="mt-1 ml-1" />
               </span>
             )}
           </div>
