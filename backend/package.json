@@ -34,14 +34,5 @@
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.3"
   },
-  "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
-    "@types/cookie-parser": "^1.4.9",
-    "@types/express": "^5.0.3",
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/multer": "^1.4.13",
-    "@types/node": "^24.0.7",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^5.8.3"
-  }
+  "devDependencies": {}
 }
