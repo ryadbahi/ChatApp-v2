@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import axios from "../api/axios";
 
 export const useTokenRefresh = (isAuthenticated: boolean) => {
-  const refreshIntervalRef = useRef<number | null>(null);
+  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
