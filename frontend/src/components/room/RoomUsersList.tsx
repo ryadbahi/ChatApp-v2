@@ -14,7 +14,7 @@ const RoomUsersList: React.FC<RoomUsersListProps> = ({ roomId, onOpenDM }) => {
   const { user } = useAuth();
   const [users, setUsers] = useState<RoomUser[]>([]);
   const [selectedUser, setSelectedUser] = useState<RoomUser | null>(null);
-  const [dropdownPosition, setDropdownPosition] = useState({ x: 100, y: 100 });
+  const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     if (!roomId) return; // Don't join if roomId is undefined

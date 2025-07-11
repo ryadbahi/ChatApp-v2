@@ -1,95 +1,77 @@
-# AuraRooms (WORK IN PROGRESS)
+# AuraRooms
 
 A modern, full-stack real-time chat application with advanced features, robust security, and a beautiful UI. Built with React, Vite, TypeScript, Node.js, Express, MongoDB, Socket.IO, and Cloudinary.
 
 ---
 
-## Recent Improvements (2025)
+## Project Overview
 
-- **Direct Messaging (DM) is now fully real-time**: Messages appear instantly in the chat window, including your own, with no refresh needed.
-- **Notification pills and "seen" status**: DM notification pills and "seen" indicators update live as soon as messages are read.
-- **Robust user identification**: The app now correctly distinguishes between the current user (`id`) and other users (`_id`) everywhere, ensuring correct message alignment and user-specific features.
-- **All real-time features are robust**: Room user lists, online status, notifications, and DMs are all fully synchronized and update instantly.
-- **Type safety and defensive checks**: All socket events and user objects are now strictly typed and validated, preventing mismatches and runtime bugs.
-- **Bugfixes**: Messages always appear on the correct side (yours vs. others) in both chatrooms and DMs. Your own DM messages now appear instantly in the chat window.
+AuraRooms is a feature-rich chat platform supporting public, private, and secret rooms, direct messaging, rich media, and robust security. The app is designed for scalability, modern UI/UX, and developer productivity.
 
 ---
 
-## Features
+## Feature Matrix
 
-### Authentication & User Management
+| Feature                            | Status         | Details                    |
+| ---------------------------------- | -------------- | -------------------------- |
+| JWT Authentication                 | ✅ Implemented | Secure, HTTP-only cookies  |
+| Registration/Login                 | ✅ Implemented | Validation, error feedback |
+| Profile Management                 | ✅ Implemented | Username, avatar upload    |
+| Password Hashing                   | ✅ Implemented | bcryptjs                   |
+| Rate Limiting                      | ✅ Implemented | express-rate-limit         |
+| Inactivity Timeout                 | ✅ Implemented | Auto disconnect, warning   |
+| Room Types (Public/Private/Secret) | ✅ Implemented | Secret rooms require code  |
+| Room CRUD                          | ✅ Implemented | Only owner can edit/delete |
+| Room User List                     | ✅ Implemented | Real-time, avatars         |
+| Room Search                        | ✅ Implemented | By name                    |
+| Real-time Messaging                | ✅ Implemented | Socket.IO                  |
+| Rich Text                          | ✅ Implemented | TextEdit, Color            |
+| Image Upload                       | ✅ Implemented | Cloudinary                 |
+| GIF Picker                         | ✅ Implemented | Tenor API                  |
+| Message History                    | ✅ Implemented | MongoDB                    |
+| Message Timestamps                 | ✅ Implemented | Relative/absolute          |
+| Direct Messaging (DMs)             | ✅ Implemented | Real-time, "seen" status   |
+| Notification Pills                 | ✅ Implemented | DM notifications           |
+| Responsive UI                      | ✅ Implemented | Mobile/tablet/desktop      |
+| Dark/Light Mode                    | ✅ Implemented | Toggle                     |
+| Accessibility                      | ✅ Implemented | Keyboard, ARIA             |
+| Toast Notifications                | ✅ Implemented | Errors, joins, leaves      |
+| Color Pickers                      | ✅ Implemented | Messages, rooms            |
+| User Avatars                       | ✅ Implemented | Fallback/upload            |
+| Profile Page                       | ✅ Implemented | View/edit info             |
+| 404 Not Found Page                 | ✅ Implemented | I Guess ?                  |
+| Typing Indicators                  | ❌ Not Yet     | Planned                    |
+| Message Read Receipts (per room)   | ❌ Not Yet     | Planned                    |
+| Advanced Admin Features            | ❌ Not Yet     | Planned                    |
+| Mobile PWA                         | ❌ Not Yet     | Planned                    |
+| Advanced Notification System       | ❌ Not Yet     | Planned                    |
+| Dark/Light Mode                    | ❌ Not Yet     | Planned                    |
 
-- **JWT-based authentication**: Secure access and refresh tokens stored in HTTP-only cookies for maximum security.
-- **Registration & Login**: Robust validation, error feedback, and prevention of duplicate accounts.
-- **Profile management**: Users can update their username, avatar (with upload), and other profile details.
-- **Password hashing**: All passwords are hashed using bcryptjs before storage.
-- **Rate limiting**: Auth endpoints are protected from brute-force attacks with express-rate-limit.
-- **Session management**: Automatic logout on token expiry, and refresh token rotation for added safety.
-- **Inactivity timeout system**: Users are automatically disconnected after a period of inactivity (no meaningful actions like joining rooms or sending messages). A warning is shown before disconnection with a "Stay Connected" button to extend the session.
-- **Message bubble effects** (3D, gradients, shadows, etc.)
+---
 
-### Chat Rooms
+## Screenshots & Demo
 
-- **Room types**: Public (open to all), Private (invite only), and Secret (hidden, join via code).
-- **Room creation, editing, and deletion**: Only authorized users (owners/admins) can manage rooms.
-- **Join/leave rooms**: Users can join/leave rooms, and secret rooms require an invite code.
-- **Room user list**: See a real-time list of users in each room, with avatars and online status.
-- **Room search**: Search rooms by name or type.
+<!-- Add screenshots or demo GIFs here -->
 
-### Messaging
+---
 
-- **Real-time messaging**: Powered by Socket.IO for instant delivery and updates.
-- **Rich text messages**: Supports bold, italic, underline, color, and emoji (with emoji-picker-react).
-- **Image upload**: Users can upload images (drag & drop, paste, or file picker), stored securely on Cloudinary.
-- **GIF picker**: Integrated Tenor GIF search and picker (via gif-picker-react) for fun, expressive chats.
-- **Message history**: All messages are persisted in MongoDB and loaded on room join.
-- **Message timestamps**: Relative and absolute timestamps, with hover/click to reveal details.
-- **Message bubble effects**: Modern 3D, gradient, and shadow effects for a beautiful chat experience.
-- **Direct messaging**: Private one-on-one conversations between users with real-time delivery, "seen" status, and message history. Users can search for other users and start direct conversations.
-- **Notification pills and "seen" status**: DM notification pills and "seen" indicators update live as soon as messages are read.
+## API & Socket Events
 
-<!-- The following features are not yet implemented, so they are commented out for clarity:
-- Typing indicators: See when other users are typing in real time. (NOT IMPLEMENTED)
-- Message read receipts: Optional per room, shows who has read each message. (NOT IMPLEMENTED)
--->
+### REST API
 
-### UI/UX
+- `/api/auth/register` - Register new user
+- `/api/auth/login` - Login
+- `/api/auth/profile` - Get/update profile
+- `/api/rooms` - Room CRUD
+- `/api/messages/:roomId` - Get messages for room
+- `/api/upload` - Image upload
 
-- **Responsive design** (mobile, tablet, desktop)
-- **Dark/light mode**
-- **Modern, animated UI** (beautiful gradients, transitions, and effects)
-- **Accessible** (keyboard navigation, ARIA labels, color contrast)
-- **Toast notifications** (for errors, joins, leaves, etc.)
-- **Custom color pickers** for message text and room themes
-- **Emoji picker** (emoji-picker-react)
-- **User avatars** (with fallback and upload)
-- **Profile page** (view and edit your info)
-- **404 Not Found page**
+### Socket Events
 
-### Security
-
-- **JWT in HTTP-only cookies** (prevents XSS token theft)
-- **Password hashing** (bcryptjs)
-- **Rate limiting** (express-rate-limit)
-- **Input validation & sanitization** (server and client)
-- **CORS** (only allows frontend origin)
-- **File upload validation** (type, size, and Cloudinary security)
-- **Error handling middleware** (prevents leaking stack traces)
-- **Environment variables** for all secrets and API keys
-- **No secrets in client code or git**
-- **Strict permissions** (only room owners can edit/delete, only members can send messages)
-- **Socket authentication** (token required for all socket events)
-- **No open endpoints** (all routes protected as needed)
-
-### DevOps & Quality
-
-- **TypeScript everywhere** (frontend & backend)
-- **ESLint & Prettier** (consistent code style)
-- **Vite** (fast dev/build)
-- **Hot reload** (frontend and backend)
-- **Modular, scalable codebase** (clear separation of concerns)
-- **.env files** for config (never commit secrets)
-- **Production-ready build scripts**
+- `joinRoom`, `leaveRoom`, `roomUsersUpdate` - Room presence
+- `sendMessage`, `receiveMessage` - Messaging
+- `directMessage`, `dmSeen` - Direct messaging
+- `notification` - Notifications
 
 ---
 
@@ -142,14 +124,12 @@ AuraRooms/
 
 ```bash
 # Clone the repo
-$ git clone <repo-url>
-$ cd ChatApp-v2
-
+git clone https://github.com/ryadbahi/ChatApp-v2.git
+cd ChatApp-v2
 # Install backend
-$ cd backend && npm install
-
+cd backend && npm install
 # Install frontend
-$ cd ../frontend && npm install
+cd ../frontend && npm install
 ```
 
 ### 2. Environment Variables
@@ -177,24 +157,35 @@ VITE_TENOR_API_KEY=your-tenor-api-key
 
 ```bash
 # Start backend
-$ cd backend && npm run dev
-
+cd backend && npm run dev
 # Start frontend (in another terminal)
-$ cd frontend && npm run dev
+cd frontend && npm run dev
 ```
 
 - Frontend: http://localhost:5173
-- Backend: http://localhost:5000
+- Backend: http://localhost:5001
 
 ---
 
 ## Notes & Recommendations
 
-- **Never commit your .env files or secrets.**
-- **Use HTTPS in production.**
-- **Review Cloudinary and Tenor usage limits.**
-- **For production, set secure cookies and CORS origins.**
-- **You can extend with DMs, notifications, or more integrations.**
+- Never commit your .env files or secrets.
+- Use HTTPS in production.
+- Review Cloudinary and Tenor usage limits.
+- For production, set secure cookies and CORS origins.
+- You can extend with DMs, notifications, or more integrations.
+
+---
+
+## Roadmap & Contribution
+
+- [ ] Typing indicators
+- [ ] Message read receipts (per room)
+- [ ] Advanced admin features
+- [ ] Mobile PWA
+- [ ] Advanced notification system
+
+Contributions welcome! Please open issues or pull requests for suggestions and improvements.
 
 ---
 
@@ -212,4 +203,4 @@ $ cd frontend && npm run dev
 
 ## License
 
-MIT (or your chosen license)
+This project is licensed under the [MIT License](./LICENSE).

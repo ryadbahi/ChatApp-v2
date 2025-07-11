@@ -19,6 +19,7 @@ import {
 import type { Room, Message, CreateRoomData, User } from "../types/types";
 import { joinRoom, editRoom, deleteRoom } from "../api/rooms";
 import clsx from "clsx";
+import { CiLogout } from "react-icons/ci";
 
 interface EditRoomModalProps {
   room: Room;
@@ -361,7 +362,7 @@ const ChatRoom = () => {
   return (
     <div className="flex flex-col flex-1 min-h-0 h-full">
       <div className="flex items-center justify-between mb-4 shrink-0">
-        <div className="flex items-center">
+        <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold text-white">{room.name}</h1>
           <span
             className={clsx(
@@ -387,6 +388,13 @@ const ChatRoom = () => {
               </>
             )}
           </span>
+          <button
+            onClick={handleLeave}
+            className="px-4 py-2 bg-red-500/50 text-white font-semibold rounded-lg hover:bg-gray-600/50 transition-colors"
+            style={{ zIndex: 10 }}
+          >
+            <CiLogout />
+          </button>
         </div>
 
         <div className="flex gap-2">
@@ -408,12 +416,6 @@ const ChatRoom = () => {
               </button>
             </>
           )}
-          <button
-            onClick={handleLeave}
-            className="px-4 py-2 bg-gray-500/50 text-white font-semibold rounded-lg hover:bg-gray-600/50 transition-colors"
-          >
-            Leave
-          </button>
         </div>
       </div>
       {showEditModal && (
