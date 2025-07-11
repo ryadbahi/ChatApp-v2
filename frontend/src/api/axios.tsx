@@ -1,7 +1,9 @@
 import axios from "axios";
 
+const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const instance = axios.create({
-  baseURL: "http://localhost:5001", // Point to your backend
+  baseURL: VITE_BACKEND_URL, // Use env var in production
   withCredentials: true,
   timeout: 10000, // 10 second timeout
 });
