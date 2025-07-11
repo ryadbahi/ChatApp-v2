@@ -24,6 +24,9 @@ AuraRooms is a feature-rich chat platform supporting public, private, and secret
 | Room CRUD                          | ✅ Implemented | Only owner can edit/delete |
 | Room User List                     | ✅ Implemented | Real-time, avatars         |
 | Room Search                        | ✅ Implemented | By name                    |
+| Invit friends                      | ✅ Implemented | By invitations             |
+| Direct messaging                   | ✅ Implemented | Between friends            |
+| Online / Offline Status            | ✅ Implemented | Real time between friends  |
 | Real-time Messaging                | ✅ Implemented | Socket.IO                  |
 | Rich Text                          | ✅ Implemented | TextEdit, Color            |
 | Image Upload                       | ✅ Implemented | Cloudinary                 |
