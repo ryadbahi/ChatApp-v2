@@ -20,9 +20,13 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://chat-app-v2-1owv215r9-ryadbahis-projects.vercel.app"
+];
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL, // Frontend
+    origin: allowedOrigins,
     credentials: true,
   },
 });
@@ -34,7 +38,7 @@ globalSocketIO = io;
 setupSocket(io);
 
 // ✅ Middleware
-app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 
