@@ -24,10 +24,25 @@ const server = http.createServer(app);
 const allowedOrigins = [
   "http://localhost:5173",
   "https://chat-app-v2-1owv215r9-ryadbahis-projects.vercel.app",
+  "https://chat-app-v2-eosin.vercel.app",
+  "https://chat-app-v2-ryadbahis-projects.vercel.app",
+  "https://chat-app-v2-git-main-ryadbahis-projects.vercel.app",
+
+  // Add your actual Vercel URL here
 ];
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, Postman)
+      if (!origin) return callback(null, true);
+
+      // Check if origin is in allowedOrigins OR is a vercel.app domain
+      if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   },
 });
@@ -39,7 +54,22 @@ globalSocketIO = io;
 setupSocket(io);
 
 // ✅ Middleware
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, Postman)
+      if (!origin) return callback(null, true);
+
+      // Check if origin is in allowedOrigins OR is a vercel.app domain
+      if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  })
+);
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 
@@ -73,10 +103,12 @@ app.get("/", (req, res) => {
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   const origin =
     typeof req.headers.origin === "string" ? req.headers.origin : "";
-  res.header(
-    "Access-Control-Allow-Origin",
-    allowedOrigins.includes(origin) ? origin : ""
-  );
+
+  // Allow any vercel.app domain or domains in allowedOrigins
+  const isAllowed =
+    allowedOrigins.includes(origin) || origin.endsWith(".vercel.app");
+
+  res.header("Access-Control-Allow-Origin", isAllowed ? origin : "");
   res.header("Access-Control-Allow-Credentials", "true");
   // If response already sent, just return
   if (res.headersSent) return next(err);
