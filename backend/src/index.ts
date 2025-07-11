@@ -27,8 +27,7 @@ const allowedOrigins = [
   "https://chat-app-v2-eosin.vercel.app",
   "https://chat-app-v2-ryadbahis-projects.vercel.app",
   "https://chat-app-v2-git-main-ryadbahis-projects.vercel.app",
-
-  // Add your actual Vercel URL here
+  "https://ryadbahi.github.io", // GitHub Pages domain
 ];
 const io = new Server(server, {
   cors: {
