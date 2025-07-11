@@ -9,12 +9,7 @@ import { useIsRoomsPage } from "../../hooks/useIsRoomsPage";
 import RoomSearch from "./RoomSearch";
 import { CreateRoomForm, JoinSecretRoom } from "../forms";
 import Profile from "../../pages/Profile";
-import {
-  FriendsList,
-  NotificationsMenu,
-  DMThreadsMenu,
-  DMWindow,
-} from "../social";
+import { FriendsList, DMThreadsMenu, DMWindow } from "../social";
 import type { User } from "../../types/types";
 
 interface AppLayoutProps {
@@ -204,9 +199,6 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 onOpenDM={handleOpenDM}
               />
             )}
-
-            {/* Notifications */}
-            <NotificationsMenu />
 
             <div className="h-8 w-px bg-white/20 mx-1 md:mx-2"></div>
 

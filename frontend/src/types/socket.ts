@@ -1,4 +1,4 @@
-import type { User, FriendRequest, Friendship, Notification } from "./types";
+import type { User, FriendRequest, Friendship } from "./types";
 
 export interface DirectMessage {
   _id: string;
@@ -54,12 +54,6 @@ export interface ServerToClientEvents {
     userId: string;
     isOnline: boolean;
   }) => void;
-
-  // Notifications events
-  newNotification: (notification: Notification) => void;
-  notificationMarkedAsRead: (data: { notificationId: string }) => void;
-  allNotificationsMarkedAsRead: () => void;
-  notificationDeleted: (data: { notificationId: string }) => void;
 }
 
 export interface ClientToServerEvents {
@@ -94,9 +88,4 @@ export interface ClientToServerEvents {
   getOnlineFriends: (
     callback: (data: { onlineFriends: User[] }) => void
   ) => void;
-
-  // Notifications events
-  markNotificationAsRead: (payload: { notificationId: string }) => void;
-  markAllNotificationsAsRead: () => void;
-  deleteNotification: (payload: { notificationId: string }) => void;
 }

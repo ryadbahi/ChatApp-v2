@@ -9,10 +9,15 @@ import JoinPrivate from "./pages/JoinPrivate";
 import DirectMessages from "./pages/DirectMessages";
 import DirectMessageChat from "./pages/DirectMessageChat";
 import { SocketTest, ProtectedRoute } from "./components";
+import { useSocketErrorHandler } from "./hooks/useSocketErrorHandler";
 //import { useAuth } from "./context/AuthContext";
 
 function App(): React.JSX.Element {
   //const { user, loading } = useAuth();
+
+  // Set up global socket error handling
+  useSocketErrorHandler(socket);
+
   useEffect(() => {
     const token = document.cookie
       .split("; ")

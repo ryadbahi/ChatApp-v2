@@ -48,22 +48,6 @@ export interface Friendship {
   createdAt: string;
 }
 
-export interface Notification {
-  _id: string;
-  recipient: string;
-  type:
-    | "friend_request"
-    | "friend_accepted"
-    | "direct_message"
-    | "friend_request_accepted";
-  title: string;
-  message: string;
-  data?: any;
-  read: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface DirectMessage {
   _id: string;
   sender: User;
