@@ -11,6 +11,7 @@ import authRoutes from "./routes/auth.route";
 import roomRoutes from "./routes/room.route";
 import messageRoutes from "./routes/message.route";
 import { errorHandler } from "./middlewares/errorHandler";
+import { Request, Response, NextFunction } from "express";
 import { setupSocket } from "./socket/socket"; // 👈 socket logic separated
 
 // Global socket instance for use in controllers
@@ -69,7 +70,26 @@ app.get("/", (req, res) => {
 });
 
 // ✅ Global error handler
-app.use(errorHandler);
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  const origin =
+    typeof req.headers.origin === "string" ? req.headers.origin : "";
+  res.header(
+    "Access-Control-Allow-Origin",
+    allowedOrigins.includes(origin) ? origin : ""
+  );
+  res.header("Access-Control-Allow-Credentials", "true");
+  // If response already sent, just return
+  if (res.headersSent) return next(err);
+  // Send error response with status code and message
+  const status = err.status || 500;
+  res.status(status).json({
+    error: {
+      message: err.message || "Internal Server Error",
+      code: err.code || "SERVER_ERROR",
+      status,
+    },
+  });
+});
 
 // ✅ DB + server startup
 const PORT: number = Number(process.env.PORT) || 5000;
