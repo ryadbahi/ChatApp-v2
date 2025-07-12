@@ -96,7 +96,35 @@ app.use("/api/upload", uploadRoute);
 
 // ✅ Test route
 app.get("/", (req, res) => {
-  res.send("API is running");
+  res.send(`
+    <html>
+      <head>
+        <title>AuraRooms Backend Wakeup</title>
+        <style>
+          body { font-family: Arial, sans-serif; background: #f8fafc; color: #222; padding: 2rem; }
+          .container { max-width: 600px; margin: auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 2rem; }
+          h1 { color: #6366f1; }
+          a { color: #2563eb; text-decoration: underline; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>Welcome to AuraRooms Backend</h1>
+          <p>
+            <strong>Note:</strong> The backend is hosted on Render and may be sleeping.<br>
+            To wake it up, please visit this page first.<br>
+            <a href="https://chatapp-v2-voa9.onrender.com/" target="_blank">https://chatapp-v2-voa9.onrender.com/</a>
+          </p>
+          <p>
+            Once you see the message above, return to the frontend:<br>
+            <a href="https://chat-app-v2-seven.vercel.app" target="_blank">https://chat-app-v2-seven.vercel.app</a>
+          </p>
+          <hr>
+          <small>Powered by AuraRooms &middot; Backend API is running</small>
+        </div>
+      </body>
+    </html>
+  `);
 });
 
 // ✅ Global error handler
