@@ -27,7 +27,8 @@ const allowedOrigins = [
   "https://chat-app-v2-eosin.vercel.app",
   "https://chat-app-v2-ryadbahis-projects.vercel.app",
   "https://chat-app-v2-git-main-ryadbahis-projects.vercel.app",
-  "http://ryadbah.me/ChatApp-v2/", // GitHub Pages domain
+  "http://ryadbah.me/ChatApp-v2/",
+  "https://dainty-swan-ed509d.netlify.app", // GitHub Pages domain
 ];
 const io = new Server(server, {
   cors: {
