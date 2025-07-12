@@ -99,28 +99,26 @@ app.get("/", (req, res) => {
   res.send(`
     <html>
       <head>
-        <title>AuraRooms Backend Wakeup</title>
+        <title>AuraRooms Backend is Awake!</title>
+        <meta http-equiv="refresh" content="3;url=https://chat-app-v2-seven.vercel.app" />
         <style>
           body { font-family: Arial, sans-serif; background: #f8fafc; color: #222; padding: 2rem; }
           .container { max-width: 600px; margin: auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 2rem; }
-          h1 { color: #6366f1; }
-          a { color: #2563eb; text-decoration: underline; }
+          h1 { color: #10b981; }
+          .emoji { font-size: 2.5rem; }
         </style>
       </head>
       <body>
         <div class="container">
-          <h1>Welcome to AuraRooms Backend</h1>
+          <div class="emoji">😎🎉</div>
+          <h1>AuraRooms Backend is Wide Awake!</h1>
           <p>
-            <strong>Note:</strong> The backend is hosted on Render and may be sleeping.<br>
-            To wake it up, please visit this page first.<br>
-            <a href="https://chatapp-v2-voa9.onrender.com/" target="_blank">https://chatapp-v2-voa9.onrender.com/</a>
-          </p>
-          <p>
-            Once you see the message above, return to the frontend:<br>
-            <a href="https://chat-app-v2-seven.vercel.app" target="_blank">https://chat-app-v2-seven.vercel.app</a>
+            You found me napping, but now I'm up and ready to chat!<br>
+            Redirecting you to the frontend in 3 seconds...<br>
+            <a href="https://chat-app-v2-seven.vercel.app">Or click here if you're impatient 😁</a>
           </p>
           <hr>
-          <small>Powered by AuraRooms &middot; Backend API is running</small>
+          <small>Powered by AuraRooms &middot; Go enjoy the chat!</small>
         </div>
       </body>
     </html>
