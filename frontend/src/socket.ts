@@ -5,6 +5,8 @@ import type {
   ClientToServerEvents,
 } from "./types/socket";
 
+const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 // Utility to clear token and redirect to login
 export const logoutUser = () => {
   // Clear token from cookies
@@ -25,7 +27,7 @@ const getToken = () =>
     ?.split("=")[1];
 
 export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
-  "http://localhost:5001",
+  VITE_BACKEND_URL,
   {
     auth: {
       token: getToken(),
